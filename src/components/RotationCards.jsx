@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { COMPONENT_HELP, COMPONENT_LABELS, CONFIDENCE_HELP, verdict } from '../scoring/explain.js'
 import { MONTH_NAMES } from '../scoring/rotation.js'
 import Term from './Term.jsx'
+import weights from '../data/weights.json'
 
 const r0 = Math.round
 const ORDER = ['water', 'income', 'soil', 'erosion', 'heat', 'pest', 'climate']
@@ -157,7 +158,15 @@ function Card({ card, total, isBest }) {
   )
 }
 
+function weightText(k, pw) {
+  if (MAIN.includes(k)) return `${r0(weights.overall.priorityShare * (pw?.[k] ?? 0.25) * 100)}%`
+  if (k === 'heat') return `${r0(weights.overall.heatShare * 100)}%`
+  if (k === 'pest') return `${r0(weights.overall.pestShare * 100)}%`
+  return 'safety gate'
+}
+
 function Compare({ cards }) {
+  const pw = cards[0]?.priorityWeights
   const best = Object.fromEntries(ORDER.map((k) => [k, Math.max(...cards.map((c) => c.components[k].score))]))
   return (
     <div className="compare-wrap">
@@ -166,6 +175,7 @@ function Compare({ cards }) {
         <thead>
           <tr>
             <th scope="col">Factor</th>
+            <th scope="col" title="How much this factor counts in the overall score. The four priority weights follow your sliders.">Weight</th>
             {cards.map((c) => (
               <th scope="col" key={c.kind}>{c.kind === 'baseline' ? 'Your current' : c.label.replace(' rotation', '')}</th>
             ))}
@@ -175,6 +185,7 @@ function Compare({ cards }) {
           {ORDER.map((k) => (
             <tr key={k}>
               <th scope="row" title={COMPONENT_HELP[k]}>{COMPONENT_LABELS[k]}</th>
+              <td className="wt">{weightText(k, pw)}</td>
               {cards.map((c) => {
                 const val = r0(c.components[k].score)
                 const top = r0(best[k]) === val
@@ -188,13 +199,14 @@ function Compare({ cards }) {
           ))}
           <tr className="total">
             <th scope="row">Overall</th>
+            <td />
             {cards.map((c) => (
               <td key={c.kind}>{r0(c.overall)}</td>
             ))}
           </tr>
         </tbody>
       </table>
-      <p className="hint">★ marks the best score in each row. Hover a factor name for what it means.</p>
+      <p className="hint">★ marks the best score in each row. Weight is how much a factor counts in the overall score: the first four follow your sliders, and the temperature gate lowers the overall score when a crop is outside its comfortable temperature range.</p>
     </div>
   )
 }

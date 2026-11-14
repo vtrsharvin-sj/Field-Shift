@@ -185,3 +185,52 @@ describe('end to end with real data', () => {
     expect(a).not.toBe(b)
   })
 })
+
+describe('soil data and confidence', () => {
+  const soilInfo = { sandPct: 20, siltPct: 30, clayPct: 50, organicCarbonGkg: 6, pH: 5.0, texture: 'clay', suggestedType: 'clay', depth: '0 to 30 cm', nearbyKm: 0, source: 'SoilGrids (ISRIC, not NASA), about 250 m, modelled' }
+  const claySoil = { ...farm, soilType: 'clay' }
+  const build = (info, f = claySoil) => buildContext({ power, farm: f, crops, soils, weights, soilInfo: info })
+  const rot = { id: 's', crops: [{ crop: 'maize', sowMonth: 6 }, { crop: 'black-gram', sowMonth: 10 }] }
+
+  it('uses SoilGrids to set usable rain only while the soil type matches what SoilGrids found', () => {
+    expect(build(soilInfo).soil.fromSoilGrids).toBe(true)
+    expect(build(soilInfo, { ...farm, soilType: 'sandy' }).soil.fromSoilGrids).toBeFalsy()
+    expect(build(null).soil.fromSoilGrids).toBeFalsy()
+  })
+  it('low organic carbon raises the weight of nitrogen-fixing crops in soil health', () => {
+    const low = evaluateRotation(rot, build(soilInfo), priorities).components.soil
+    const fine = evaluateRotation(rot, build({ ...soilInfo, organicCarbonGkg: 25 }), priorities).components.soil
+    expect(low.parts.lowCarbon).toBe(true)
+    expect(low.score).toBeGreaterThan(fine.score)
+  })
+  it('acid soil and low carbon appear as risks, and soil appears as evidence and a gap note', () => {
+    const ctx = build(soilInfo)
+    const comparison = compareStrategies({ baselineEntries: entries('maize', 'black-gram'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo })
+    const base = cards[0]
+    expect(base.risks.join(' ')).toMatch(/acidic/)
+    expect(base.risks.join(' ')).toMatch(/organic carbon is low/)
+    expect(base.evidence.map((e) => e.text).join(' ')).toMatch(/Soil at this point: sand 20%/)
+    expect(base.gaps.join(' ')).toMatch(/SoilGrids/)
+  })
+  it('without soil data the soil gap says so', () => {
+    const ctx = build(null)
+    const comparison = compareStrategies({ baselineEntries: entries('maize'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    expect(cards[0].gaps.join(' ')).toMatch(/Soil properties not fetched/)
+  })
+  it('cards carry the priority weights that make up the overall score', () => {
+    const ctx = build(null)
+    const comparison = compareStrategies({ baselineEntries: entries('maize'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    const w = cards[0].priorityWeights
+    expect(w.water + w.income + w.soil + w.erosion).toBeCloseTo(1)
+  })
+  it('confidence is lower without a satellite cross-check and mentions why', () => {
+    const ctx = build(null)
+    const comparison = compareStrategies({ baselineEntries: entries('maize'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    expect(cards[0].confidence.reasons.join(' ')).toMatch(/cross-checked POWER yet/)
+    expect(cards[0].confidence.level).not.toBe('High')
+  })
+})

@@ -229,3 +229,20 @@ dd { margin-left: 0; color: var(--muted); }
 .leaflet-control-layers { font-size: .9rem; }
 
 .gmap { height: 340px; width: 100%; }
+
+.banner { display: flex; align-items: center; gap: .6rem; margin: 0 0 1rem; padding: .6rem .9rem; border-radius: 12px; background: var(--blue-100); color: var(--blue-700); font-weight: 600; }
+.banner.done { background: var(--green-100); color: var(--green-900); }
+.spinner.small { width: 18px; height: 18px; margin: 0; border-width: 3px; flex: none; }
+.dslist { list-style: none; padding: 0; margin: .25rem 0 .5rem; }
+.ds { display: flex; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.ds:last-child { border-bottom: 0; }
+.ds-mark { width: 1.3rem; height: 1.3rem; flex: none; display: inline-grid; place-items: center; border-radius: 50%; font-weight: 800; font-size: .8rem; background: #e5e9ee; }
+.ds-ok .ds-mark { background: var(--green-600); color: #fff; }
+.ds-loading .ds-mark { background: var(--blue-100); color: var(--blue-700); }
+.ds-body small { display: block; color: var(--muted); }
+.ds-state { color: var(--muted); font-size: .85rem; }
+.soiltable { width: 100%; border-collapse: collapse; margin: .5rem 0 1rem; font-size: .95rem; }
+.soiltable caption { text-align: left; font-weight: 700; padding-bottom: .3rem; font-size: .9rem; color: var(--muted); }
+.soiltable th, .soiltable td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
+.soiltable th { font-weight: 600; color: var(--muted); }
+.compare td.wt { color: var(--muted); font-size: .85rem; }

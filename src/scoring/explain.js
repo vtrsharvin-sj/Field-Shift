@@ -34,9 +34,12 @@ const monthList = (ms) => (ms.length ? list(ms.map((m) => MONTH_NAMES[m - 1])) :
 
 function globalGaps(ctx, soilInfo) {
   const gaps = []
-  gaps.push('No soil test: soil is set from the dropdown, so water holding and fertility are rough.')
-  if (soilInfo?.error || !soilInfo) gaps.push('Soil properties not fetched (SoilGrids was not reachable or not used), so the soil type dropdown was used.')
-  else gaps.push(`SoilGrids (ISRIC, not NASA) suggested ${soilInfo.suggestedType} soil here (sand ${r0(soilInfo.sandPct)}%, clay ${r0(soilInfo.clayPct)}%). It is about 250 m resolution and was not used in the scores other than to pre-fill the dropdown.`)
+  gaps.push('No soil test: soil values are modelled or chosen from a dropdown, so water holding and fertility are rough.')
+  if (!soilInfo) gaps.push('Soil properties not fetched (SoilGrids had no answer or no data here), so the soil type dropdown was used and soil organic carbon and pH were not considered.')
+  else {
+    gaps.push(`Soil comes from SoilGrids (ISRIC, not NASA): about 250 m, modelled, 0 to 30 cm${soilInfo.nearbyKm ? `, taken about ${soilInfo.nearbyKm} km away because the exact point has no data` : ''}. It sets how much rain crops can use${ctx.soil.fromSoilGrids ? '' : ' only while the soil type matches (you changed the soil type, so your choice was used)'}.`)
+    gaps.push('Crop pH preferences are not in the crop table, so soil pH is shown as a risk note only and does not change scores.')
+  }
   gaps.push('Crop traits come from FAO tables (Kc from FAO-56, temperature ranges in the style of FAO EcoCrop) entered by the developer and not yet checked crop by crop. Ratings for income, drought tolerance and cover are generic estimates. Local varieties differ.')
   gaps.push('Sowing months were chosen from the temperature and rain record at this point, not from local planting calendars. Season lengths use mid-range crop durations. Check both with a local expert.')
   gaps.push('Market prices are not included. Income is a generic rating, not a profit forecast.')
@@ -85,6 +88,8 @@ function evidenceFor(ev, ctx) {
     if (s.soilWetnessMean != null) lines.push({ text: `${name}: root-zone soil wetness is usually ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale.`, source: `${src}, GWETROOT (modelled, not measured)` })
   })
   const e = ev.components.erosion
+  const si = ctx.soilInfo
+  if (si) lines.push({ text: `Soil at this point: sand ${r0(si.sandPct)}%, silt ${r0(si.siltPct)}%, clay ${r0(si.clayPct)}% (${si.texture})${si.organicCarbonGkg != null ? `, organic carbon ${si.organicCarbonGkg.toFixed(0)} g/kg` : ''}${si.pH != null ? `, pH ${si.pH.toFixed(1)}` : ''}. ${ctx.soil.fromSoilGrids ? `Crops are assumed to use about ${r0(ctx.soil.rainEfficiency * 100)}% of the rain on this soil.` : `Your soil type choice (${ctx.soil.label}) was used for water holding.`}`, source: `${si.source}, ${si.depth}` })
   lines.push({ text: `Months with no crop in the field: ${monthList(e.bareMonths)}. ${e.exposedHeavyMonths.length ? `Of these, ${monthList(e.exposedHeavyMonths)} are heavy-rain months.` : 'None of them are among the heaviest-rain months.'}`, source: `Sowing calendar in rotations.json plus heavy-rain days (above ${r0(ctx.heavyMm)} mm) from ${src}` })
   if (ctx.satellite?.slope) lines.push({ text: `Slope at the farm point is about ${ctx.satellite.slope.slopePct.toFixed(1)}% (${ctx.satellite.slope.classLabel}), which takes ${e.slopePenalty} points off erosion protection.`, source: ctx.satellite.slope.source })
   lines.push({ text: `Crop traits used: ${list(unique(ev.items.map((it) => `${it.crop.name} (nitrogen fixing ${it.crop.nFixing}/5, drought tolerance ${it.crop.droughtTolerance}/5, ground cover ${it.crop.erosionCover}/5)`)))}.`, source: 'crops.json (estimates, not yet verified)' })
@@ -134,7 +139,11 @@ function risksFor(ev, ctx, baselineEv) {
       if (d <= -5) out.push(`Scores ${r0(-d)} points lower than your current rotation on ${COMPONENT_LABELS[k].toLowerCase()}.`)
     })
   }
-const sat = ctx.satellite
+const si = ctx.soilInfo
+  if (si?.pH != null && si.pH < ctx.weights.soilData.phLow) out.push(`Soil is acidic (pH ${si.pH.toFixed(1)}, SoilGrids). Many crops lose yield below pH ${ctx.weights.soilData.phLow}. Ask about lime and which crops tolerate it.`)
+  if (si?.pH != null && si.pH > ctx.weights.soilData.phHigh) out.push(`Soil is alkaline (pH ${si.pH.toFixed(1)}, SoilGrids). Some nutrients become hard for crops to take up above pH ${ctx.weights.soilData.phHigh}. Ask a local expert about gypsum or suitable crops.`)
+  if (ev.components.soil.parts.lowCarbon) out.push(`Soil organic carbon is low (${si.organicCarbonGkg.toFixed(0)} g/kg, SoilGrids). Legumes, cover crops and residues matter more here, and yields depend more on fertilizer.`)
+  const sat = ctx.satellite
   if (sat?.landCover && !sat.landCover.isCropland) out.push(`The satellite land-cover map classes this point as ${sat.landCover.name}, not cropland (MODIS MCD12Q1, 500 m). Check the coordinates; results may describe a different land use.`)
   if (sat?.et) {
     const low = ev.items.some((it) => { const r = seasonMonthValues(sat.et.ratio, it.sowMonth, it.durationDays); return r != null && r < ctx.weights.satellite.waterStressRatioLow })
@@ -204,7 +213,9 @@ function confidenceFor(ev, cards, ctx, unknownCount) {
   if (ag) {
     if (ag.agrees) reasons.push(`MODIS potential evapotranspiration agrees with the POWER-based estimate (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r.toFixed(2)}).`)
     else { issues += 1; reasons.push(`MODIS potential evapotranspiration and the POWER-based estimate disagree (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r?.toFixed(2) ?? 'n/a'}).`) }
-  } else reasons.push('No second NASA source was available to cross-check POWER.')
+  } else { issues += 1; reasons.push('No second NASA source has cross-checked POWER yet (satellite layers not loaded, failed, or too short). Confidence rises once they load and agree.') }
+  if (ctx.soilInfo) reasons.push(`Soil texture comes from SoilGrids (${ctx.soilInfo.texture}), a 250 m model rather than a soil test.`)
+  else reasons.push('No soil data was available, so the soil type dropdown was used.')
   if (ctx.satellite?.landCover && !ctx.satellite.landCover.isCropland) { issues += 1; reasons.push(`The land-cover map shows ${ctx.satellite.landCover.name} at this point, not cropland.`) }
   if (ctx.scenario?.rainChangePct || ctx.scenario?.tempChangeC) { issues += 1; reasons.push('A what-if scenario is applied.') }
   const level = issues === 0 ? 'High' : issues === 1 ? 'Medium' : 'Low'
@@ -224,7 +235,7 @@ export function buildCards({ comparison, ctx, priorities, soilInfo }) {
   const allEv = evs.map((e) => e.ev)
   const ranked = [...allEv].sort((a, b) => b.overall - a.overall)
   const gaps = globalGaps(ctx, soilInfo)
-  const unknownCount = 3 + (ctx.satellite?.slope ? 0 : 1) + (crops_unverified(allEv) ? 1 : 0)
+  const unknownCount = 3 + (ctx.satellite?.slope ? 0 : 1) + (crops_unverified(allEv) ? 1 : 0) + (ctx.soilInfo ? 0 : 1)
   const ndviLine = (ev) => {
     const n = ctx.satellite?.ndvi
     if (!n) return null
@@ -246,6 +257,7 @@ export function buildCards({ comparison, ctx, priorities, soilInfo }) {
       overall: ev.overall,
       rank: ranked.indexOf(ev) + 1,
       components: ev.components,
+      priorityWeights: ev.priorityWeights,
       bareFraction: ev.components.erosion.bare,
       why: whyFor(ev, baseEv, kind, strategy, ctx, priorities),
       evidence: [...evidenceFor(ev, ctx), ...(kind === 'baseline' && ndviLine(ev) ? [ndviLine(ev)] : []), ...(lcLine ? [lcLine] : [])],

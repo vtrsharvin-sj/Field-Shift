@@ -50,9 +50,19 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
       </div>
       <p className="hint" aria-live="polite">
         {soilStatus === 'loading' && 'Checking a world soil map (SoilGrids, not NASA) for your spot...'}
-        {soilStatus === 'ok' && soilInfo && `A world soil map (SoilGrids, not NASA) suggests ${soilInfo.suggestedType} soil here: sand ${Math.round(soilInfo.sandPct)}%, clay ${Math.round(soilInfo.clayPct)}%. You can change it above.`}
+        {soilStatus === 'ok' && soilInfo && `A world soil map (SoilGrids, not NASA) found ${soilInfo.texture} soil here, so "${soilInfo.suggestedType}" was chosen above. It also sets how much rain your crops can use. Change it if you know better.`}
         {soilStatus === 'error' && 'The soil map did not answer, so please choose your soil type yourself.'}
       </p>
+
+      {soilInfo && (
+        <table className="soiltable">
+          <caption>Soil at your point (SoilGrids, ISRIC, not NASA; modelled, {soilInfo.depth}){soilInfo.nearbyKm ? `, taken about ${soilInfo.nearbyKm} km away` : ''}</caption>
+          <tbody>
+            <tr><th scope="row">Texture</th><td>{soilInfo.texture}</td><th scope="row">Sand / silt / clay</th><td>{Math.round(soilInfo.sandPct)}% / {Math.round(soilInfo.siltPct)}% / {Math.round(soilInfo.clayPct)}%</td></tr>
+            <tr><th scope="row">Organic carbon</th><td>{soilInfo.organicCarbonGkg != null ? `${soilInfo.organicCarbonGkg.toFixed(0)} g/kg` : 'n/a'}</td><th scope="row">pH</th><td>{soilInfo.pH != null ? soilInfo.pH.toFixed(1) : 'n/a'}</td></tr>
+          </tbody>
+        </table>
+      )}
 
       <h3>What do you grow now?</h3>
       <label className="block">

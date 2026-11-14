@@ -58,16 +58,18 @@ export function heatScore(items, seasons, w) {
   return { score, rows, formula: `Heat and frost fit = 100 - heat penalty - frost penalty. Heat penalty is 0 while very hot days stay under ${w.heat.toleratedHeatShare * 100}% of the season and reaches 100 at ${w.heat.fullPenaltyHeatShare * 100}%. Frost penalty is ${w.heat.frostPenaltyPerNight} points per frost night, scaled by the crop's frost sensitivity.` }
 }
 
-export function soilScore(items, w) {
+export function soilScore(items, w, soilInfo = null) {
   const crops = items.map((it) => it.crop)
-  const nFix = mean(crops.map((c) => c.nFixing / 5)) * w.soil.nFixingPoints
+  const lowCarbon = soilInfo?.organicCarbonGkg != null && soilInfo.organicCarbonGkg < w.soilData.lowCarbonGkg
+  const boost = lowCarbon ? w.soilData.lowCarbonBoost : 1
+  const nFix = mean(crops.map((c) => c.nFixing / 5)) * w.soil.nFixingPoints * boost
   const roots = mean(crops.map((c) => c.rootDepth / 5)) * w.soil.rootDepthPoints
   const families = new Set(crops.map((c) => c.family)).size
   const diversity = Math.min(w.soil.diversityMax, (families - 1) * w.soil.diversityPerFamily)
   const pairs = cropPairs(items)
   const repeat = mean(pairs.map(([a, b]) => (a.id === b.id ? w.soil.sameCropRepeatPenalty : a.family === b.family ? w.soil.sameFamilyRepeatPenalty : 0)))
   const score = clamp(w.soil.base + nFix + roots + diversity - repeat)
-  return { score, parts: { base: w.soil.base, nFix, roots, diversity, repeat, families }, formula: `Soil health = ${w.soil.base} base + nitrogen-fixing crops (up to ${w.soil.nFixingPoints}) + deep roots (up to ${w.soil.rootDepthPoints}) + crop-family variety (${w.soil.diversityPerFamily} per extra family, up to ${w.soil.diversityMax}) - penalty for repeating the same crop (${w.soil.sameCropRepeatPenalty}) or family (${w.soil.sameFamilyRepeatPenalty}) back to back.` }
+  return { score, parts: { base: w.soil.base, nFix, roots, diversity, repeat, families, lowCarbon }, formula: `Soil health = ${w.soil.base} base + nitrogen-fixing crops (up to ${w.soil.nFixingPoints}) + deep roots (up to ${w.soil.rootDepthPoints}) + crop-family variety (${w.soil.diversityPerFamily} per extra family, up to ${w.soil.diversityMax}) - penalty for repeating the same crop (${w.soil.sameCropRepeatPenalty}) or family (${w.soil.sameFamilyRepeatPenalty}) back to back.${soilInfo?.organicCarbonGkg != null ? ` Soil organic carbon is ${soilInfo.organicCarbonGkg.toFixed(0)} g/kg (SoilGrids)${lowCarbon ? `, below ${w.soilData.lowCarbonGkg}, so nitrogen-fixing points count x${w.soilData.lowCarbonBoost}` : ', so no adjustment'}.` : ''}` }
 }
 
 export function erosionScore(items, monthly, w, slope = null) {

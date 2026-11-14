@@ -2,6 +2,8 @@
 // https://modis.ornl.gov/rst/api/v1/  Each request may cover at most 10 composites, so long series are fetched in chunks.
 // Verify product and band names on the ORNL DAAC page before the demo: they can change.
 
+import { fetchSlope } from './elevation.js'
+
 export const ORNL_BASE = 'https://modis.ornl.gov/rst/api/v1'
 
 export const LAYERS = {
@@ -121,4 +123,60 @@ export async function fetchLandCover({ lat, lon }, { fetchImpl = globalThis.fetc
   const cls = json?.subset?.[0]?.data?.[0]
   if (typeof cls !== 'number' || cls === 255) throw new Error('No land cover class at this point.')
   return { igbpClass: cls, year, resolution: '500 m, yearly', label: 'MODIS land cover (MCD12Q1)', fetchedAt: new Date().toISOString() }
+}
+
+// ---- Background bundle with a browser cache (the "pre-fetched" layers) ----
+const CACHE_PREFIX = 'satCache:v1:'
+export const CACHE_DAYS = 30
+const cacheKey = (p) => `${CACHE_PREFIX}${Number(p.lat).toFixed(2)},${Number(p.lon).toFixed(2)}`
+
+export function readSatelliteCache(point, { storage = globalThis.localStorage, now = Date.now() } = {}) {
+  try {
+    const raw = JSON.parse(storage?.getItem(cacheKey(point)) ?? 'null')
+    if (!raw || now - raw.savedAt > CACHE_DAYS * 86400000) return null
+    return { ...raw.layers, errors: {}, fromCache: true, savedAt: raw.savedAt }
+  } catch {
+    return null
+  }
+}
+
+export function writeSatelliteCache(point, layers, { storage = globalThis.localStorage, now = Date.now() } = {}) {
+  try {
+    storage?.setItem(cacheKey(point), JSON.stringify({ savedAt: now, layers }))
+  } catch {
+    /* storage full or unavailable: the layers still work for this visit */
+  }
+}
+
+/**
+ * Load every satellite layer for a point. Uses the cache when it is complete and fresh.
+ * Each layer fails independently; failures are listed in `errors`. Only a fully successful load is cached.
+ */
+export async function fetchSatelliteBundle(point, slopeClasses, { onProgress = () => {}, force = false, ...opts } = {}) {
+  if (!force) {
+    const cached = readSatelliteCache(point)
+    if (cached) return cached
+  }
+  const totals = { ndvi: [0, 0], et: [0, 0], lst: [0, 0] }
+  const report = () => onProgress(Object.values(totals).reduce((a, t) => a + t[0], 0), Object.values(totals).reduce((a, t) => a + t[1], 0))
+  const tracked = (key) => fetchLayer(key, point, { concurrency: 3, ...opts, onProgress: (d, t) => { totals[key] = [d, t]; report() } })
+  const jobs = [
+    ['ndvi', tracked('ndvi')],
+    ['et', tracked('et')],
+    ['lst', tracked('lst')],
+    ['landCover', fetchLandCover(point, opts)],
+    ['slope', fetchSlope(point.lat, point.lon, slopeClasses)],
+  ]
+  const settled = await Promise.allSettled(jobs.map((j) => j[1]))
+  const out = { errors: {}, fromCache: false }
+  settled.forEach((r, i) => {
+    const key = jobs[i][0]
+    if (r.status === 'fulfilled') out[key] = r.value
+    else out.errors[key] = r.reason?.message?.slice(0, 120) ?? 'failed'
+  })
+  if (!Object.keys(out.errors).length) {
+    const { errors, fromCache, ...layers } = out
+    writeSatelliteCache(point, layers)
+  }
+  return out
 }

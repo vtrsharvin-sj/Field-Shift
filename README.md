@@ -11,7 +11,9 @@ A free, client-side decision-support tool that compares crop rotations for **any
 3. It screens all 37 crops in `src/data/crops.json` against that climate (temperature range, sowing temperature, frost kill, water balance, heat days) and works out the best sowing months. Cold-winter crops are handled with growing days, so a winter wheat season runs through the dormant period.
 4. It builds candidate rotations (within one year, or alternating over two years), picks the best one for each strategy (legume, water-saving, soil-cover), and compares them with your own rotation.
 5. Each card shows the score, why it was suggested, NASA evidence, benefits, information gaps, risks for local review, and a confidence level with reasons.
-6. Optional NASA satellite layers (NDVI, evapotranspiration, ground temperature, land cover) add evidence and a cross-check against POWER.
+6. Soil comes from SoilGrids (ISRIC, not NASA): texture sets how much rain crops can use, low organic carbon raises the value of legumes, and pH shows up as a risk note. If the exact point has no data (built-up land, water), a point about 1 km away is used and the app says so.
+7. NASA satellite layers (MODIS NDVI, evapotranspiration, ground temperature, land cover) and slope load in the background right after the climate data, and are saved in the browser for 30 days, so a second visit is instant. MODIS potential evapotranspiration is cross-checked against the POWER-based estimate, and the result feeds the confidence level.
+8. The results page shows a "Data used" checklist, the weight each factor has in the overall score (the four priority weights follow your sliders), and the reasons behind every confidence level.
 
 ## Run
 

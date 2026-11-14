@@ -6,6 +6,7 @@ import RotationCards from './RotationCards.jsx'
 import ClimateSnapshot from './ClimateSnapshot.jsx'
 import SatelliteSection from './SatelliteSection.jsx'
 import About from './About.jsx'
+import DataStatus from './DataStatus.jsx'
 import { FarmForm, Priorities } from './FarmForm.jsx'
 
 function Summary({ result }) {
@@ -82,6 +83,7 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
           <div className="panel">
             <Priorities priorities={priorities} onChange={onPriorities} compact />
           </div>
+          <DataStatus ctx={ctx} power={power} soil={soil} sat={sat} />
           <details className="panel">
             <summary>Edit soil, water and current rotation</summary>
             <FarmForm farm={farm} onChange={onFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx.climate} compact />
@@ -90,6 +92,16 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
       </aside>
 
       <div className="main">
+        {sat.status === 'loading' && (
+          <p className="banner" role="status" aria-live="polite">
+            <span className="spinner small" aria-hidden="true" /> Loading NASA satellite layers in the background{sat.progress.total ? ` (${sat.progress.done} of ${sat.progress.total})` : ''}. These results update by themselves when it finishes, and confidence can rise.
+          </p>
+        )}
+        {sat.status === 'ok' && sat.raw && (
+          <p className="banner done" role="status">
+            Satellite layers {Object.keys(sat.raw.errors ?? {}).length ? `loaded with ${Object.keys(sat.raw.errors).length} problem(s), see "Data used"` : sat.raw.fromCache ? 'loaded from this browser (saved earlier, no new download)' : 'loaded and added to the results'}.
+          </p>
+        )}
         <Summary result={result} />
         <div className="tabs" role="tablist" aria-label="Result sections">
           {TABS.map(([id, label]) => (

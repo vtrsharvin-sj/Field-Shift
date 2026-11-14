@@ -6,6 +6,7 @@ import { etSummary, landCoverInfo, lstSummary, ndviSummary, sourceAgreement } fr
 import { classifyClimate } from '../indicators/zone.js'
 import { climateFitScore, erosionScore, heatScore, incomeScore, pestScore, soilScore, waterScore } from './components.js'
 import { midDuration, resolveRotation, validateRotation } from './rotation.js'
+import { rainEfficiencyFromTexture } from '../api/soilgrids.js'
 import { rotationKey } from './names.js'
 
 /** Apply a what-if scenario to the real daily record: rain x factor, temperatures + offset. Returns the same days when no change. */
@@ -38,7 +39,7 @@ export function summarizeSatellite(raw, powerMonthly, w) {
 }
 
 /** Build everything the scoring needs from one POWER download. */
-export function buildContext({ power, farm, crops, soils, weights, scenario, satellite }) {
+export function buildContext({ power, farm, crops, soils, weights, scenario, satellite, soilInfo = null }) {
   const trends = annualTrends(power.days) // trends always use the real, unchanged record
   const days = applyScenario(power.days, scenario)
   const index = indexDays(days)
@@ -46,7 +47,10 @@ export function buildContext({ power, farm, crops, soils, weights, scenario, sat
   const lat = Number(farm.lat)
   const monthly = monthlyClimatology(days, { lat, heavyMm })
   const cropsById = Object.fromEntries(crops.map((c) => [c.id, c]))
-  const soil = soils.types.find((s) => s.id === farm.soilType) ?? soils.types.find((s) => s.id === 'loam')
+  const dropdownSoil = soils.types.find((s) => s.id === farm.soilType) ?? soils.types.find((s) => s.id === 'loam')
+  // SoilGrids refines water holding only while the farmer's soil type still matches what SoilGrids found.
+  const useSoilGrids = Boolean(soilInfo) && farm.soilType === soilInfo.suggestedType
+  const soil = useSoilGrids ? { ...dropdownSoil, rainEfficiency: rainEfficiencyFromTexture(soilInfo, weights.soilData.rainEff), fromSoilGrids: true } : dropdownSoil
   const seasonCache = new Map()
   const seasonFor = (crop, sowMonth, durationDays) => {
     const key = `${crop.id}|${sowMonth}|${durationDays}`
@@ -64,6 +68,7 @@ export function buildContext({ power, farm, crops, soils, weights, scenario, sat
     farm,
     weights,
     soil,
+    soilInfo,
     crops,
     cropsById,
     trends,
@@ -120,7 +125,7 @@ export function scoreRotation(rotation, ctx) {
           components: {
             water: waterScore(items, seasons, ctx.farm, w, ctx.soil),
             heat: heatScore(items, seasons, w),
-            soil: soilScore(items, w),
+            soil: soilScore(items, w, ctx.soilInfo),
             erosion: erosionScore(items, ctx.monthly, w, ctx.satellite?.slope ?? null),
             income: incomeScore(items, w),
             pest: pestScore(items, seasons, w),

@@ -144,5 +144,21 @@
     },
     "variantsShown": 4,
     "screeningCropDays": 240
+  },
+  "soilData": {
+    "note": "How SoilGrids values change the scores. All are rough estimates: verify with a soil test.",
+    "rainEff": {
+      "base": 0.8,
+      "clayRef": 25,
+      "clayPerPct": 0.002,
+      "sandRef": 40,
+      "sandPerPct": -0.0015,
+      "min": 0.65,
+      "max": 0.92
+    },
+    "lowCarbonGkg": 10,
+    "lowCarbonBoost": 1.25,
+    "phLow": 5.5,
+    "phHigh": 8
   }
 }

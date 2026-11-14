@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import crops from './data/crops.json'
 import rotations from './data/rotations.json'
 import soils from './data/soils.json'
@@ -6,8 +6,7 @@ import weights from './data/weights.json'
 import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
 import { fetchPower, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
-import { fetchLayer, fetchLandCover } from './api/satellite.js'
-import { fetchSlope } from './api/elevation.js'
+import { fetchSatelliteBundle } from './api/satellite.js'
 import { buildContext } from './scoring/engine.js'
 import { compareStrategies } from './scoring/planner.js'
 import { buildCards } from './scoring/explain.js'
@@ -49,6 +48,7 @@ export default function App() {
       return setStep(0)
     }
     setShowHero(false)
+    runId.current += 1
     setView('loading')
     setData({ status: 'loading', power: null, error: null })
     resetSat()
@@ -63,6 +63,7 @@ export default function App() {
       const power = await fetchPower({ lat: f.lat, lon: f.lon, ...WINDOW })
       setData({ status: 'ok', power, error: null })
       setView('results')
+      loadSatellite({ point: power.meta, id: runId.current })
     } catch (e) {
       setData({ status: 'error', power: null, error: e.message })
       setView('wizard')
@@ -70,29 +71,18 @@ export default function App() {
     }
   }
 
-  async function loadSatellite() {
-    const m = data.power?.meta
+  // Satellite layers load in the background right after the climate data. A run id drops results from an older analysis.
+  const runId = useRef(0)
+  async function loadSatellite({ point, force = false, id = runId.current } = {}) {
+    const m = point ?? data.power?.meta
     if (!m) return
-    const point = { lat: m.lat, lon: m.lon }
-    const raw = { errors: {} }
-    const totals = { ndvi: [0, 0], et: [0, 0], lst: [0, 0] }
-    const report = () => setSat((s) => ({ ...s, progress: { done: Object.values(totals).reduce((a, t) => a + t[0], 0), total: Object.values(totals).reduce((a, t) => a + t[1], 0) } }))
+    const p = { lat: m.lat, lon: m.lon }
     setSat({ status: 'loading', raw: null, progress: { done: 0, total: 0 } })
-    const tracked = (key) => fetchLayer(key, point, { concurrency: 3, onProgress: (d, t) => { totals[key] = [d, t]; report() } })
-    const jobs = [
-      ['ndvi', tracked('ndvi')],
-      ['et', tracked('et')],
-      ['lst', tracked('lst')],
-      ['landCover', fetchLandCover(point)],
-      ['slope', fetchSlope(m.lat, m.lon, weights.satellite.slopeClasses)],
-    ]
-    const settled = await Promise.allSettled(jobs.map((j) => j[1]))
-    settled.forEach((r, i) => {
-      const key = jobs[i][0]
-      if (r.status === 'fulfilled') raw[key] = r.value
-      else raw.errors[key] = r.reason?.message?.slice(0, 120) ?? 'failed'
+    const raw = await fetchSatelliteBundle(p, weights.satellite.slopeClasses, {
+      force,
+      onProgress: (done, total) => { if (id === runId.current) setSat((s) => (s.status === 'loading' ? { ...s, progress: { done, total } } : s)) },
     })
-    setSat((s) => ({ ...s, status: 'ok', raw }))
+    if (id === runId.current) setSat((s) => ({ ...s, status: 'ok', raw }))
   }
 
   const onPreset = (id) => setFarm((f) => (id === 'custom' ? { ...f, presetId: 'custom' } : id === '' ? { ...f, presetId: '', baselineCrops: emptySlots() } : { ...f, presetId: id, baselineCrops: slotsFromPreset(id) }))
@@ -100,8 +90,8 @@ export default function App() {
   const ctx = useMemo(() => {
     if (!data.power) return null
     const m = data.power.meta
-    return buildContext({ power: data.power, farm: { ...farm, lat: m.lat ?? farm.lat, lon: m.lon ?? farm.lon }, crops, soils, weights, scenario, satellite: sat.raw })
-  }, [data.power, farm.soilType, farm.waterSource, farm.waterAvailability, scenario, sat.raw])
+    return buildContext({ power: data.power, farm: { ...farm, lat: m.lat ?? farm.lat, lon: m.lon ?? farm.lon }, crops, soils, weights, scenario, satellite: sat.raw, soilInfo: soil.info })
+  }, [data.power, farm.soilType, farm.waterSource, farm.waterAvailability, scenario, sat.raw, soil.info])
 
   const result = useMemo(() => {
     if (!ctx) return null
@@ -179,7 +169,7 @@ export default function App() {
             setScenario={setScenario}
             soil={soil}
             sat={sat}
-            onLoadSat={loadSatellite}
+            onLoadSat={() => loadSatellite({ force: true })}
             onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}
             onPrint={() => window.print()}
           />
