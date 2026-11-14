@@ -1,4 +1,7 @@
-// Place search by name (Open-Meteo geocoding, free, no key, CORS enabled).
+// Place search: village, town, district, landmark, farm or business names.
+// Sources (all free; Google is used only when the Maps JavaScript API with its key is already loaded):
+//   Google Geocoder (if available), OpenStreetMap Nominatim (names, landmarks, addresses), Open-Meteo (towns and cities).
+// Nominatim rules: only on explicit search (no autocomplete), at most one request per search.
 
 const BASE = 'https://geocoding-api.open-meteo.com/v1/search'
 
@@ -11,7 +14,7 @@ export function parsePlaces(json) {
   }))
 }
 
-export async function searchPlaces(query, { fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
+export async function searchOpenMeteo(query, { fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
   const q = String(query ?? '').trim()
   if (q.length < 2) return []
   const ctrl = new AbortController()
@@ -55,3 +58,57 @@ export function parseCoordinates(text) {
 }
 
 export const googleMapsLink = (lat, lon) => `https://www.google.com/maps?q=${lat},${lon}`
+
+export function parseNominatim(json) {
+  const list = Array.isArray(json) ? json : []
+  return list
+    .map((r) => ({ name: r.display_name, lat: Number(r.lat), lon: Number(r.lon), kind: r.type ?? r.category ?? '' }))
+    .filter((r) => r.name && Number.isFinite(r.lat) && Number.isFinite(r.lon))
+}
+
+export async function searchNominatim(query, { fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const res = await fetchImpl(`https://nominatim.openstreetmap.org/search?${new URLSearchParams({ q: query, format: 'jsonv2', limit: '6', addressdetails: '0' })}`, { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } })
+    if (!res.ok) throw new Error(`Place search responded with status ${res.status}.`)
+    return parseNominatim(await res.json())
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** Google Geocoder through the already-loaded Maps JavaScript API. Resolves to [] when unavailable or not permitted for the key. */
+export function searchGoogle(query, g = globalThis.window?.google) {
+  if (!g?.maps?.Geocoder) return Promise.resolve([])
+  return new Promise((resolve) => {
+    try {
+      new g.maps.Geocoder().geocode({ address: query }, (results, status) => {
+        if (status !== 'OK' || !Array.isArray(results)) return resolve([])
+        resolve(results.slice(0, 5).map((r) => ({ name: r.formatted_address, lat: Number(r.geometry.location.lat()), lon: Number(r.geometry.location.lng()), kind: 'google' })))
+      })
+    } catch {
+      resolve([])
+    }
+  })
+}
+
+/** Merge result lists and drop places closer than about 1 km to one already listed. */
+export function mergePlaces(lists, max = 8) {
+  const out = []
+  lists.flat().forEach((p) => {
+    if (!out.some((q) => Math.abs(q.lat - p.lat) < 0.01 && Math.abs(q.lon - p.lon) < 0.01)) out.push(p)
+  })
+  return out.slice(0, max)
+}
+
+/** Search every source in parallel. Throws only if every source failed. */
+export async function searchPlaces(query, opts = {}) {
+  const q = String(query ?? '').trim()
+  if (q.length < 2) return []
+  const [google, osm, meteo] = await Promise.allSettled([searchGoogle(q), searchNominatim(q, opts), searchOpenMeteo(q, opts)])
+  const lists = [google, osm, meteo].filter((s) => s.status === 'fulfilled').map((s) => s.value)
+  // Google never rejects (it returns [] when unavailable), so only the two network sources decide whether the search failed.
+  if (osm.status === 'rejected' && meteo.status === 'rejected' && !lists.flat().length) throw new Error(osm.reason?.message ?? 'Place search failed.')
+  return mergePlaces(lists)
+}

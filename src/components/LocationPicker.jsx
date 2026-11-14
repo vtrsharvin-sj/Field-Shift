@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, CircleMarker, LayersControl, useMapEvents, use
 import 'leaflet/dist/leaflet.css'
 import { googleMapsLink, parseCoordinates, searchPlaces } from '../api/geocode.js'
 import GoogleMapPicker, { GOOGLE_KEY } from './GoogleMapPicker.jsx'
-import { DEMO_FARMS } from '../demo.js'
 
 function ClickHandler({ onPick }) {
   useMapEvents({ click: (e) => onPick(Number(e.latlng.lat.toFixed(4)), Number(e.latlng.lng.toFixed(4))) })
@@ -18,7 +17,7 @@ function Recenter({ lat, lon }) {
   return null
 }
 
-export default function LocationPicker({ farm, onChange, onUseDemo }) {
+export default function LocationPicker({ farm, onChange }) {
   const lat = Number(farm.lat)
   const lon = Number(farm.lon)
   const valid = farm.lat !== '' && farm.lon !== '' && Number.isFinite(lat) && Number.isFinite(lon)
@@ -44,7 +43,7 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
     try {
       const found = await searchPlaces(query)
       setPlaces(found)
-      setMsg(found.length ? '' : 'No place found. Try a different spelling, or tap the map.')
+      setMsg(found.length ? `${found.length} place${found.length === 1 ? '' : 's'} found. Choose one:` : 'No place found. Try a different spelling, add the district or country, or tap the map.')
     } catch (err) {
       setMsg(`Search failed: ${err.message} You can still tap the map.`)
     }
@@ -65,11 +64,11 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
   return (
     <section aria-labelledby="loc-h">
       <h2 id="loc-h">Where is your farm?</h2>
-      <p className="lead">Search for a place, tap the map, or use your location. This works anywhere on land.</p>
+      <p className="lead">Search for a village, town, farm or landmark by name, tap the map, or use your location. This works anywhere on land.</p>
       <form className="searchrow" onSubmit={search}>
         <label>
-          Search a place
-          <input type="search" value={query} placeholder="Village, town or district" onChange={(e) => setQuery(e.target.value)} />
+          Search by place name
+          <input type="search" value={query} placeholder="For example: a village, a district, a farm or a landmark" onChange={(e) => setQuery(e.target.value)} />
         </label>
         <button type="submit" className="secondary">Search</button>
         <button type="button" className="secondary" onClick={locate}>Use my location</button>
@@ -117,15 +116,6 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
         <label>
           Longitude
           <input type="number" step="0.0001" value={farm.lon} onChange={(e) => onChange({ lon: e.target.value })} />
-        </label>
-        <label>
-          Or try an example farm
-          <select value="" onChange={(e) => e.target.value && onUseDemo(e.target.value)}>
-            <option value="">Choose...</option>
-            {DEMO_FARMS.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
         </label>
       </div>
       {valid && (

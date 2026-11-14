@@ -6,7 +6,7 @@ A free, client-side decision-support tool that compares crop rotations for **any
 
 ## How it works
 
-1. You pick a location (search, map, GPS, or coordinates), soil type, water source, your current rotation and your priorities.
+1. You pick a location (search by place name, tap the map, GPS, paste coordinates or a Google Maps link), soil type, water source, your current rotation and your priorities.
 2. The app downloads 20 years of daily NASA POWER data for that point (temperature, rain, humidity, sunlight, soil wetness).
 3. It screens all 37 crops in `src/data/crops.json` against that climate (temperature range, sowing temperature, frost kill, water balance, heat days) and works out the best sowing months. Cold-winter crops are handled with growing days, so a winter wheat season runs through the dormant period.
 4. It builds candidate rotations (within one year, or alternating over two years), picks the best one for each strategy (legume, water-saving, soil-cover), and compares them with your own rotation.
@@ -50,7 +50,7 @@ All asset paths are relative, so it works under `https://<user>.github.io/<repo>
 | `src/data/crops.json` | Crop table (FAO-56 Kc, EcoCrop-style temperature ranges, `grownIn` climate types) |
 | `src/data/rotations.json` | Example rotations and the three strategies |
 | `src/data/weights.json` | Every scoring weight and threshold |
-| `public/data/` | Saved real POWER download used only as a labelled fallback |
+| `test-data/` | A real POWER download used only by the unit tests (never shown in the app) |
 
 ## Limits you should know
 

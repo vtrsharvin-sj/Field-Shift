@@ -3,8 +3,8 @@ import crops from './data/crops.json'
 import rotations from './data/rotations.json'
 import soils from './data/soils.json'
 import weights from './data/weights.json'
-import { CACHED_EXAMPLE_NAME, CACHED_EXAMPLE_URL, DEFAULT_PRIORITIES, DEMO_FARMS, WINDOW } from './demo.js'
-import { fetchPower, loadCachedExample, validateLocation } from './api/power.js'
+import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
+import { fetchPower, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchLayer, fetchLandCover } from './api/satellite.js'
 import { fetchSlope } from './api/elevation.js'
@@ -25,7 +25,7 @@ function slotsFromPreset(id) {
   return slots
 }
 
-const initialFarm = { lat: '', lon: '', soilType: 'loam', waterSource: 'rainfed', waterAvailability: 'low', presetId: 'maize-fallow', baselineCrops: slotsFromPreset('maize-fallow') }
+const initialFarm = { lat: '', lon: '', soilType: 'loam', waterSource: 'rainfed', waterAvailability: 'low', presetId: '', baselineCrops: emptySlots() }
 
 export default function App() {
   const [farm, setFarm] = useState(initialFarm)
@@ -70,21 +70,6 @@ export default function App() {
     }
   }
 
-  async function useExample() {
-    setView('loading')
-    setData({ status: 'loading', power: null, error: null })
-    resetSat()
-    try {
-      const power = await loadCachedExample(CACHED_EXAMPLE_URL)
-      setData({ status: 'ok', power, error: null })
-      setView('results')
-    } catch (e) {
-      setData({ status: 'error', power: null, error: e.message })
-      setView('wizard')
-      setStep(2)
-    }
-  }
-
   async function loadSatellite() {
     const m = data.power?.meta
     if (!m) return
@@ -110,16 +95,7 @@ export default function App() {
     setSat((s) => ({ ...s, status: 'ok', raw }))
   }
 
-  function useDemo(id) {
-    const d = DEMO_FARMS.find((x) => x.id === id)
-    if (!d) return
-    const f = { ...farm, lat: d.lat, lon: d.lon, soilType: d.soilType, waterSource: d.waterSource, waterAvailability: d.waterAvailability, presetId: d.presetId, baselineCrops: slotsFromPreset(d.presetId) }
-    setFarm(f)
-    setPriorities(d.priorities)
-    loadData(f)
-  }
-
-  const onPreset = (id) => setFarm((f) => (id === 'custom' ? { ...f, presetId: 'custom' } : { ...f, presetId: id, baselineCrops: slotsFromPreset(id) }))
+  const onPreset = (id) => setFarm((f) => (id === 'custom' ? { ...f, presetId: 'custom' } : id === '' ? { ...f, presetId: '', baselineCrops: emptySlots() } : { ...f, presetId: id, baselineCrops: slotsFromPreset(id) }))
 
   const ctx = useMemo(() => {
     if (!data.power) return null
@@ -148,13 +124,13 @@ export default function App() {
     <div className="app">
       <Header onHome={goHome} showHome={view === 'results'} />
       <main id="main">
-        {view === 'wizard' && showHero && step === 0 && <Hero onStart={() => setShowHero(false)} onDemo={useDemo} />}
+        {view === 'wizard' && showHero && step === 0 && <Hero onStart={() => setShowHero(false)} />}
 
         {view === 'wizard' && !showHero && (
           <div className="wizard">
             <Stepper step={step} onGo={setStep} canGo={canGo} />
             <div className="card-plain">
-              {step === 0 && <LocationPicker farm={farm} onChange={patchFarm} onUseDemo={useDemo} />}
+              {step === 0 && <LocationPicker farm={farm} onChange={patchFarm} />}
               {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} />}
               {step === 2 && (
                 <>
@@ -163,8 +139,8 @@ export default function App() {
                     <div className="error" role="alert">
                       <p><strong>We could not get the NASA data.</strong></p>
                       <p>{data.error}</p>
-                      <p>You can try again, or look at a saved example for {CACHED_EXAMPLE_NAME}. The example is real NASA data downloaded earlier and does not describe your farm.</p>
-                      <button type="button" className="secondary" onClick={useExample}>Show the saved example ({CACHED_EXAMPLE_NAME})</button>
+                      <p>Check your internet connection and try again. Nothing is shown in place of real data.</p>
+                      <button type="button" className="secondary" onClick={() => loadData()}>Try again</button>
                     </div>
                   )}
                 </>

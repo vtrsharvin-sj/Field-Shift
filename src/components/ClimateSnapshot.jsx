@@ -36,7 +36,6 @@ export default function ClimateSnapshot({ ctx, power }) {
       <h2 id="clim-h">Your climate, from NASA data</h2>
       <p className="source">
         Source: {powerSourceLabel(meta)}. {Math.round(meta.completeness * 1000) / 10}% of daily values were usable.
-        {meta.origin === 'prefetched-example' && <strong> This is a saved example, not a new download.</strong>}
       </p>
       {ctx.climate && (
         <p className="note">

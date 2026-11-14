@@ -16,9 +16,9 @@ const cropsById = Object.fromEntries(crops.map((c) => [c.id, c]))
 const farm = { lat: 11.0168, lon: 76.9558, soilType: 'loam', waterSource: 'borewell', waterAvailability: 'medium' }
 const priorities = { water: 8, income: 3, soil: 8, erosion: 5 }
 
-// Real NASA POWER download for Coimbatore (a tropical test location), saved in public/data.
-const power = parsePowerResponse(JSON.parse(readFileSync('public/data/power_coimbatore_2005_2024.json', 'utf8')))
-power.meta.origin = 'prefetched-example'
+// Real NASA POWER download for Coimbatore (a tropical test location), saved in test-data (used only by tests).
+const power = parsePowerResponse(JSON.parse(readFileSync('test-data/power_coimbatore_2005_2024.json', 'utf8')))
+power.meta.origin = 'live'
 const ctxFor = (f = farm, scenario) => buildContext({ power, farm: f, crops, soils, weights, scenario })
 const entries = (...ids) => ids.map((c) => ({ crop: c, sowMonth: 'auto' }))
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { googleMapsLink, parseCoordinates, parsePlaces } from './geocode.js'
+import { googleMapsLink, mergePlaces, parseCoordinates, parseNominatim, parsePlaces, searchPlaces } from './geocode.js'
 
 describe('parseCoordinates', () => {
   it('reads plain pairs', () => {
@@ -33,4 +33,28 @@ describe('links and places', () => {
     expect(p).toEqual([{ name: 'Ames, Iowa, United States', lat: 42.03, lon: -93.62 }])
     expect(parsePlaces({})).toEqual([])
   })
+})
+
+describe('place name search', () => {
+  it('parses OpenStreetMap results (landmarks, villages, farms)', () => {
+    const p = parseNominatim([{ display_name: 'Eiffel Tower, Paris, France', lat: '48.8582599', lon: '2.2945006', type: 'tower' }, { display_name: 'bad', lat: 'x', lon: 'y' }])
+    expect(p).toEqual([{ name: 'Eiffel Tower, Paris, France', lat: 48.8582599, lon: 2.2945006, kind: 'tower' }])
+    expect(parseNominatim(null)).toEqual([])
+  })
+  it('merges sources and drops places within about 1 km of one already listed', () => {
+    const m = mergePlaces([[{ name: 'A', lat: 10.0, lon: 77.0 }], [{ name: 'A again', lat: 10.003, lon: 77.004 }, { name: 'B', lat: 11, lon: 78 }]])
+    expect(m.map((x) => x.name)).toEqual(['A', 'B'])
+  })
+  it('returns results from the sources that work when another fails', async () => {
+    const fetchImpl = async (url) => {
+      if (String(url).includes('nominatim')) throw new Error('down')
+      return { ok: true, json: async () => ({ results: [{ name: 'Ames', admin1: 'Iowa', country: 'USA', latitude: 42.03, longitude: -93.62 }] }) }
+    }
+    const r = await searchPlaces('Ames', { fetchImpl })
+    expect(r[0].name).toBe('Ames, Iowa, USA')
+  })
+  it('throws only when every source fails', async () => {
+    await expect(searchPlaces('Ames', { fetchImpl: async () => { throw new Error('offline') } })).rejects.toThrow()
+  })
+  it('ignores very short queries', async () => expect(await searchPlaces('a')).toEqual([]))
 })

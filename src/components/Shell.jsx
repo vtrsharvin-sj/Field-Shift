@@ -1,5 +1,4 @@
 import { DISCLAIMER } from '../data/glossary.js'
-import { DEMO_FARMS } from '../demo.js'
 
 export function Header({ onHome, showHome }) {
   return (
@@ -22,7 +21,7 @@ export function Header({ onHome, showHome }) {
   )
 }
 
-export function Hero({ onStart, onDemo }) {
+export function Hero({ onStart }) {
   return (
     <section className="hero" aria-labelledby="hero-h">
       <h1 id="hero-h">Find the crop rotation that fits your farm</h1>
@@ -34,14 +33,6 @@ export function Hero({ onStart, onDemo }) {
       </ul>
       <div className="hero-cta">
         <button type="button" className="primary big" onClick={onStart}>Start with my farm</button>
-        <span className="or">or try an example:</span>
-        <div className="chips">
-          {DEMO_FARMS.map((d) => (
-            <button key={d.id} type="button" className="chip" onClick={() => onDemo(d.id)}>
-              {d.name.split(' (')[0]}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   )

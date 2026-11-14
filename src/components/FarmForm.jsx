@@ -58,6 +58,7 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
       <label className="block">
         Start from a common rotation
         <select value={farm.presetId} onChange={(e) => onPreset(e.target.value)}>
+          <option value="">Choose a common rotation...</option>
           {zone && matching.length > 0 && (
             <optgroup label={`Common in a ${zone.label.toLowerCase()} climate`}>
               {matching.map((r) => (

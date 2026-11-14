@@ -22,9 +22,7 @@ const unique = (xs) => [...new Set(xs)]
 export function powerSourceLabel(meta) {
   const span = `${meta.startYear} to ${meta.endYear}`
   const origin =
-    meta.origin === 'prefetched-example'
-      ? `pre-fetched NASA data saved ${meta.fetchedAt}`
-      : meta.origin === 'live'
+    meta.origin === 'live'
         ? 'fetched live'
         : `from browser cache (fetched ${String(meta.fetchedAt ?? '').slice(0, 10)})`
   const where = meta.lat != null && meta.lon != null ? ` at ${Number(meta.lat).toFixed(2)}, ${Number(meta.lon).toFixed(2)}` : ''

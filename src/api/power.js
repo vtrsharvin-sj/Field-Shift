@@ -128,7 +128,7 @@ async function fetchJson(url, { timeoutMs, fetchImpl }) {
 
 /**
  * Fetch and parse POWER data. Retries on failure. Never returns fake data:
- * on failure it throws, and the UI decides whether to offer the labelled cached example.
+ * on failure it throws and the UI shows the error.
  */
 export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchImpl = globalThis.fetch } = {}) {
   const bad = validateLocation(opts.lat, opts.lon)
@@ -162,20 +162,4 @@ export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchIm
   }
   const reason = lastErr?.name === 'AbortError' ? 'The request timed out.' : lastErr?.message
   throw new Error(`Could not get NASA POWER data. ${reason ?? ''}`.trim())
-}
-
-/** Load the pre-fetched real POWER response saved in public/data (clearly labelled in the UI). */
-export async function loadCachedExample(url, fetchImpl = globalThis.fetch) {
-  const res = await fetchImpl(url)
-  if (!res.ok) throw new Error('The saved example data could not be loaded.')
-  const json = await res.json()
-  const parsed = parsePowerResponse(json)
-  parsed.meta = {
-    ...parsed.meta,
-    origin: 'prefetched-example',
-    fetchedAt: json?.header?.fetchedAt ?? '2026-11-14',
-    lat: json?.geometry?.coordinates?.[1],
-    lon: json?.geometry?.coordinates?.[0],
-  }
-  return parsed
 }
