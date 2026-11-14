@@ -112,7 +112,10 @@ export const STRATEGY_RULES = {
 function candidatePool(ctx) {
   const p = ctx.weights.planner
   // Only crops commonly grown in this climate type are suggested as alternatives (crops.json grownIn). Any crop can still be chosen as the baseline.
-  const grown = (c) => !ctx.climate || !c.grownIn || c.grownIn.includes(ctx.climate.group)
+  const localLevel = (c) => ctx.local?.crops?.[c.id]?.level
+  // Only crops named for the farm's own area or region open the door to crops outside the climate list; country-wide mentions do not.
+  const knownHere = (c) => ['place', 'region'].includes(localLevel(c))
+  const grown = (c) => !ctx.climate || !c.grownIn || c.grownIn.includes(ctx.climate.group) || knownHere(c)
   const mains = ctx.crops.filter((c) => c.role === 'main' && grown(c))
   const covers = ctx.crops.filter((c) => (c.role === 'cover' || c.coverUse) && grown(c))
   const optsOf = (crops) => crops.flatMap((c) => bestOptionsForCrop(c, ctx, p.optionsPerCrop)).sort((a, b) => b.quality - a.quality)
@@ -121,6 +124,8 @@ function candidatePool(ctx) {
     ...mainOpts.slice(0, p.maxOptions),
     ...optsOf(mains.filter((c) => c.nFixing >= 4)).slice(0, 6),
     ...optsOf(mains.filter((c) => c.droughtTolerance >= 4)).slice(0, 6),
+    // Crops that articles about the area name as grown there always get considered.
+    ...optsOf(mains.filter((c) => ['place', 'region'].includes(localLevel(c)))).slice(0, 10),
     ...optsOf(covers).slice(0, p.coverOptions),
   ]
   const seen = new Set()
@@ -174,7 +179,14 @@ export function generateAlternatives(ctx, strategies, priorities, baselineCropKe
     .map((c) => ({ ...c.scored, ...overallScore(c.scored.components, priorities, ctx.weights), matches: c.matches, cropKey: c.cropKey }))
   const used = new Set()
   return strategies.map((strategy) => {
-    const list = ranked.filter((r) => r.matches.includes(strategy.id)).sort((a, b) => b.overall - a.overall)
+    let list = ranked.filter((r) => r.matches.includes(strategy.id)).sort((a, b) => b.overall - a.overall)
+    // With local knowledge, suggest crops known around the farm when any such rotation exists.
+    if (ctx.local) {
+      // First choice: every crop is at least mentioned in articles about the area. Then: the average is high enough. Otherwise: no filter.
+      const allKnown = list.filter((r) => r.components.local.rows.every((x) => x.level !== 'none'))
+      const mostlyKnown = list.filter((r) => (r.components.local?.score ?? 0) >= ctx.weights.localCrops.minForSuggestion)
+      list = allKnown.length ? allKnown : mostlyKnown.length ? mostlyKnown : list
+    }
     const best = list.find((r) => !used.has(r.cropKey)) ?? null
     if (best) used.add(best.cropKey)
     const variants = []

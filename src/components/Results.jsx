@@ -7,6 +7,7 @@ import ClimateSnapshot from './ClimateSnapshot.jsx'
 import SatelliteSection from './SatelliteSection.jsx'
 import About from './About.jsx'
 import DataStatus from './DataStatus.jsx'
+import LocalCrops from './LocalCrops.jsx'
 import { FarmForm, Priorities } from './FarmForm.jsx'
 
 function Summary({ result }) {
@@ -50,13 +51,14 @@ function WhatIf({ scenario, setScenario }) {
 
 const TABS = [
   ['recs', 'Recommendations'],
+  ['local', 'Grown here'],
   ['climate', 'Climate'],
   ['sat', 'Satellite'],
   ['whatif', 'What if?'],
   ['learn', 'Learn'],
 ]
 
-export default function Results({ ctx, result, power, farm, onFarm, onPreset, priorities, onPriorities, scenario, setScenario, soil, sat, onLoadSat, onChangeLocation, onPrint }) {
+export default function Results({ ctx, result, power, farm, onFarm, onPreset, priorities, onPriorities, scenario, setScenario, soil, local, sat, onLoadSat, onChangeLocation, onPrint }) {
   const [tab, setTab] = useState('recs')
   const [sideOpen, setSideOpen] = useState(() => !(typeof window !== 'undefined' && window.matchMedia?.('(max-width: 860px)').matches))
   const soilLabel = farm.soilType
@@ -83,10 +85,10 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
           <div className="panel">
             <Priorities priorities={priorities} onChange={onPriorities} compact />
           </div>
-          <DataStatus ctx={ctx} power={power} soil={soil} sat={sat} />
+          <DataStatus ctx={ctx} power={power} soil={soil} sat={sat} local={local} />
           <details className="panel">
             <summary>Edit soil, water and current rotation</summary>
-            <FarmForm farm={farm} onChange={onFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx.climate} compact />
+            <FarmForm farm={farm} onChange={onFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx.climate} local={local.data} localStatus={local.status} compact />
           </details>
         </div>
       </aside>
@@ -119,6 +121,7 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
               </p>
             </>
           )}
+          {tab === 'local' && <LocalCrops local={local.data} status={local.status} />}
           {tab === 'climate' && <ClimateSnapshot ctx={ctx} power={power} />}
           {tab === 'sat' && <SatelliteSection ctx={ctx} status={sat.status} progress={sat.progress} errors={sat.raw?.errors ?? {}} onLoad={onLoadSat} />}
           {tab === 'whatif' && <WhatIf scenario={scenario} setScenario={setScenario} />}

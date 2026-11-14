@@ -246,3 +246,14 @@ dd { margin-left: 0; color: var(--muted); }
 .soiltable th, .soiltable td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
 .soiltable th { font-weight: 600; color: var(--muted); }
 .compare td.wt { color: var(--muted); font-size: .85rem; }
+
+.localist { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .9rem; }
+.localist li { border: 1px solid var(--line); border-radius: 12px; padding: .7rem .9rem; background: #fbfdfc; }
+.lc-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.chip-level { font-size: .78rem; font-weight: 800; padding: .15rem .6rem; border-radius: 99px; background: #eef1f4; color: var(--muted); }
+.chip-level.lv-place { background: var(--green-100); color: var(--green-900); }
+.chip-level.lv-region { background: var(--blue-100); color: var(--blue-700); }
+.chip-level.lv-country { background: var(--amber-100); color: var(--amber-700); }
+.localist blockquote { margin: .4rem 0 0; padding: .3rem .8rem; border-left: 3px solid var(--line); color: var(--muted); font-size: .92rem; }
+.localist cite { font-style: normal; font-size: .85rem; }
+.pages { padding-left: 1.2rem; }

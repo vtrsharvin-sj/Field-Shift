@@ -7,6 +7,7 @@ import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
 import { fetchPower, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchSatelliteBundle } from './api/satellite.js'
+import { fetchLocalCrops } from './api/localCrops.js'
 import { buildContext } from './scoring/engine.js'
 import { compareStrategies } from './scoring/planner.js'
 import { buildCards } from './scoring/explain.js'
@@ -33,9 +34,23 @@ export default function App() {
   const [data, setData] = useState({ status: 'idle', power: null, error: null })
   const [soil, setSoil] = useState({ status: 'idle', info: null })
   const [sat, setSat] = useState({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
+  const [local, setLocal] = useState({ status: 'idle', data: null, key: '' })
   const [view, setView] = useState('wizard') // wizard | loading | results
   const [step, setStep] = useState(0)
   const [showHero, setShowHero] = useState(true)
+
+  // What is grown around the farm (text about the area). Starts when the location is confirmed so the crop lists in step 2 are already smart.
+  async function loadLocal(lat, lon) {
+    const key = `${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`
+    if (local.key === key && local.status !== 'idle') return
+    setLocal({ status: 'loading', data: null, key })
+    try {
+      const data = await fetchLocalCrops(Number(lat), Number(lon), crops, weights.localCrops)
+      setLocal((cur) => (cur.key === key ? { status: 'ok', data, key } : cur))
+    } catch (e) {
+      setLocal((cur) => (cur.key === key ? { status: 'ok', data: { available: false, reason: e.message }, key } : cur))
+    }
+  }
 
   const patchFarm = useCallback((p) => setFarm((f) => ({ ...f, ...p })), [])
   const resetSat = () => setSat({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
@@ -48,6 +63,7 @@ export default function App() {
       return setStep(0)
     }
     setShowHero(false)
+    loadLocal(f.lat, f.lon)
     runId.current += 1
     setView('loading')
     setData({ status: 'loading', power: null, error: null })
@@ -90,8 +106,8 @@ export default function App() {
   const ctx = useMemo(() => {
     if (!data.power) return null
     const m = data.power.meta
-    return buildContext({ power: data.power, farm: { ...farm, lat: m.lat ?? farm.lat, lon: m.lon ?? farm.lon }, crops, soils, weights, scenario, satellite: sat.raw, soilInfo: soil.info })
-  }, [data.power, farm.soilType, farm.waterSource, farm.waterAvailability, scenario, sat.raw, soil.info])
+    return buildContext({ power: data.power, farm: { ...farm, lat: m.lat ?? farm.lat, lon: m.lon ?? farm.lon }, crops, soils, weights, scenario, satellite: sat.raw, soilInfo: soil.info, local: local.data })
+  }, [data.power, farm.soilType, farm.waterSource, farm.waterAvailability, scenario, sat.raw, soil.info, local.data])
 
   const result = useMemo(() => {
     if (!ctx) return null
@@ -121,7 +137,7 @@ export default function App() {
             <Stepper step={step} onGo={setStep} canGo={canGo} />
             <div className="card-plain">
               {step === 0 && <LocationPicker farm={farm} onChange={patchFarm} />}
-              {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} />}
+              {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} local={local.data} localStatus={local.status} />}
               {step === 2 && (
                 <>
                   <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
@@ -138,7 +154,7 @@ export default function App() {
               <div className="nav">
                 <button type="button" className="ghost" onClick={() => (step === 0 ? goHome() : setStep(step - 1))}>Back</button>
                 {step < 2 ? (
-                  <button type="button" className="primary" onClick={() => setStep(step + 1)} disabled={!canGo(step + 1)}>
+                  <button type="button" className="primary" onClick={() => { if (step === 0) loadLocal(farm.lat, farm.lon); setStep(step + 1) }} disabled={!canGo(step + 1)}>
                     Next
                   </button>
                 ) : (
@@ -168,6 +184,7 @@ export default function App() {
             scenario={scenario}
             setScenario={setScenario}
             soil={soil}
+            local={local}
             sat={sat}
             onLoadSat={() => loadSatellite({ force: true })}
             onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}

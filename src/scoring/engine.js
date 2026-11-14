@@ -4,7 +4,7 @@
 import { annualTrends, heavyRainThreshold, indexDays, monthlyClimatology, seasonIndicators } from '../indicators/climate.js'
 import { etSummary, landCoverInfo, lstSummary, ndviSummary, sourceAgreement } from '../indicators/satellite.js'
 import { classifyClimate } from '../indicators/zone.js'
-import { climateFitScore, erosionScore, heatScore, incomeScore, pestScore, soilScore, waterScore } from './components.js'
+import { climateFitScore, erosionScore, heatScore, incomeScore, localScore, pestScore, soilScore, waterScore } from './components.js'
 import { midDuration, resolveRotation, validateRotation } from './rotation.js'
 import { rainEfficiencyFromTexture } from '../api/soilgrids.js'
 import { rotationKey } from './names.js'
@@ -39,7 +39,7 @@ export function summarizeSatellite(raw, powerMonthly, w) {
 }
 
 /** Build everything the scoring needs from one POWER download. */
-export function buildContext({ power, farm, crops, soils, weights, scenario, satellite, soilInfo = null }) {
+export function buildContext({ power, farm, crops, soils, weights, scenario, satellite, soilInfo = null, local = null }) {
   const trends = annualTrends(power.days) // trends always use the real, unchanged record
   const days = applyScenario(power.days, scenario)
   const index = indexDays(days)
@@ -79,6 +79,8 @@ export function buildContext({ power, farm, crops, soils, weights, scenario, sat
     scenario: scenario ?? {},
     climate: classifyClimate(realMonthly, lat),
     satellite: summarizeSatellite(satellite, realMonthly, weights),
+    local: local?.available ? local : null,
+    localReason: local && !local.available ? local.reason : null,
     scoreCache: new Map(),
   }
 }
@@ -94,7 +96,8 @@ export function normalizePriorities(p) {
 export function overallScore(c, priorities, w) {
   const pw = normalizePriorities(priorities)
   const priorityPart = pw.water * c.water.score + pw.income * c.income.score + pw.soil * c.soil.score + pw.erosion * c.erosion.score
-  const base = w.overall.priorityShare * priorityPart + w.overall.heatShare * c.heat.score + w.overall.pestShare * c.pest.score
+  const localShare = c.local ? w.localCrops.overallShare : 0 // taken from the priority share only when local data exists
+  const base = (w.overall.priorityShare - localShare) * priorityPart + w.overall.heatShare * c.heat.score + w.overall.pestShare * c.pest.score + localShare * (c.local?.score ?? 0)
   const lowest = c.climate ? c.climate.lowest : 100
   const floor = w.climateFit?.floor ?? 1
   const gate = floor + (1 - floor) * (lowest / 100)
@@ -130,6 +133,7 @@ export function scoreRotation(rotation, ctx) {
             income: incomeScore(items, w),
             pest: pestScore(items, seasons, w),
             climate: climateFitScore(items, seasons, w),
+            ...(ctx.local ? { local: localScore(items, ctx.local, w.localCrops) } : {}),
           },
         }
       }

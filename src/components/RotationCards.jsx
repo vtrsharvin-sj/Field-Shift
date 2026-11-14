@@ -5,7 +5,7 @@ import Term from './Term.jsx'
 import weights from '../data/weights.json'
 
 const r0 = Math.round
-const ORDER = ['water', 'income', 'soil', 'erosion', 'heat', 'pest', 'climate']
+const ORDER = ['water', 'income', 'soil', 'erosion', 'heat', 'pest', 'climate', 'local']
 const MAIN = ['water', 'income', 'soil', 'erosion']
 
 function Ring({ value }) {
@@ -84,13 +84,13 @@ function Details({ card }) {
         {tab === 'gaps' && <ul>{card.gaps.map((t, i) => <li key={i}>{t}</li>)}</ul>}
         {tab === 'how' && (
           <>
-            {ORDER.map((k) => (
+            {ORDER.filter((k) => card.components[k]).map((k) => (
               <p key={k} className="formula">
                 <strong>{COMPONENT_LABELS[k]} ({r0(card.components[k].score)}):</strong> {card.components[k].formula}
               </p>
             ))}
             <p className="formula">
-              Overall = (0.8 x your priority weights x water, income, soil and erosion + 0.1 x heat and frost + 0.1 x pest and disease) x a temperature-fit factor between 0.4 and 1. All weights are in weights.json.
+              Overall = (your priority weights x water, income, soil and erosion + fixed shares for heat and frost, pest and disease, and grown locally when local data exists) x a temperature-fit factor between 0.4 and 1. The exact weights are in the table and in weights.json.
             </p>
             <h5>Months with a crop in the field</h5>
             <Timeline card={card} />
@@ -158,8 +158,9 @@ function Card({ card, total, isBest }) {
   )
 }
 
-function weightText(k, pw) {
-  if (MAIN.includes(k)) return `${r0(weights.overall.priorityShare * (pw?.[k] ?? 0.25) * 100)}%`
+function weightText(k, pw, hasLocal) {
+  if (MAIN.includes(k)) return `${r0((weights.overall.priorityShare - (hasLocal ? weights.localCrops.overallShare : 0)) * (pw?.[k] ?? 0.25) * 100)}%`
+  if (k === 'local') return `${r0(weights.localCrops.overallShare * 100)}%`
   if (k === 'heat') return `${r0(weights.overall.heatShare * 100)}%`
   if (k === 'pest') return `${r0(weights.overall.pestShare * 100)}%`
   return 'safety gate'
@@ -167,7 +168,7 @@ function weightText(k, pw) {
 
 function Compare({ cards }) {
   const pw = cards[0]?.priorityWeights
-  const best = Object.fromEntries(ORDER.map((k) => [k, Math.max(...cards.map((c) => c.components[k].score))]))
+  const best = Object.fromEntries(ORDER.filter((k) => cards[0].components[k]).map((k) => [k, Math.max(...cards.map((c) => c.components[k].score))]))
   return (
     <div className="compare-wrap">
       <table className="compare">
@@ -182,10 +183,10 @@ function Compare({ cards }) {
           </tr>
         </thead>
         <tbody>
-          {ORDER.map((k) => (
+          {ORDER.filter((k) => cards[0].components[k]).map((k) => (
             <tr key={k}>
               <th scope="row" title={COMPONENT_HELP[k]}>{COMPONENT_LABELS[k]}</th>
-              <td className="wt">{weightText(k, pw)}</td>
+              <td className="wt">{weightText(k, pw, Boolean(cards[0].components.local))}</td>
               {cards.map((c) => {
                 const val = r0(c.components[k].score)
                 const top = r0(best[k]) === val

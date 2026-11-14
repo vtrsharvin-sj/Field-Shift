@@ -17,6 +17,7 @@ export default function About() {
       <ul>
         <li><strong>NASA POWER</strong> (live): daily temperature, rain, humidity, sunshine and modelled soil wetness, about 50 km grid, 2005 to 2024. It is a model and satellite blend, so local rain can differ, especially near hills.</li>
         <li><strong>SoilGrids</strong> (ISRIC, not NASA, live): soil sand, clay and carbon. Used only to suggest a soil type.</li>
+        <li><strong>Local crops</strong> (Wikipedia text, CC BY-SA): articles about your village, district, state and country are read for the crops in our table. It shows what is described as grown near you. It is not production data and can be old or thin for small places.</li>
         <li><strong>Crop table</strong>: 37 crops with crop coefficients from FAO-56 and temperature ranges in the style of FAO EcoCrop. Entered by the developer and not yet checked crop by crop. Local varieties differ.</li>
         <li><strong>Where it works</strong>: any land location. Sowing months and candidate rotations are worked out from the climate at your point, so results for a region you know well are the best test.</li>
         <li><strong>Not included</strong>: MODIS NDVI, SMAP soil moisture, GPM rainfall, SRTM slope, GRACE groundwater, soil tests, market prices.</li>

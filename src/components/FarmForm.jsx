@@ -7,9 +7,15 @@ export const MAX_CUSTOM_CROPS = 3
 
 const isMatch = (r, zone) => zone && r.zones.includes(zone.group)
 
-export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone, compact = false }) {
-  const matching = rotations.baselinePresets.filter((r) => isMatch(r, zone))
-  const others = rotations.baselinePresets.filter((r) => !isMatch(r, zone))
+export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone, local = null, localStatus = 'idle', compact = false }) {
+  const known = (id) => (local?.available ? local.crops[id]?.score ?? 0 : 0)
+  const localPresets = local?.available ? rotations.baselinePresets.filter((r) => r.crops.every((id) => known(id) >= 80)) : []
+  const rest = rotations.baselinePresets.filter((r) => !localPresets.includes(r))
+  const matching = rest.filter((r) => isMatch(r, zone))
+  const others = rest.filter((r) => !isMatch(r, zone))
+  const mainCrops = crops.filter((x) => x.role === 'main')
+  const nearCrops = local?.available ? mainCrops.filter((x) => known(x.id) >= 80).sort((a, b) => known(b.id) - known(a.id) || a.name.localeCompare(b.name)) : []
+  const otherCrops = mainCrops.filter((x) => !nearCrops.includes(x))
   const setSlot = (i, patch) => {
     const slots = farm.baselineCrops.map((s, j) => (j === i ? { ...s, ...patch } : s))
     onChange({ baselineCrops: slots, presetId: 'custom' })
@@ -65,10 +71,22 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
       )}
 
       <h3>What do you grow now?</h3>
+      <p className="hint" aria-live="polite">
+        {localStatus === 'loading' && 'Looking up what is grown near your farm...'}
+        {localStatus === 'ok' && local?.available && `The lists below put crops known around ${local.place.label || 'your farm'} first (from Wikipedia articles about your area).`}
+        {localStatus === 'ok' && !local?.available && 'Nothing was found about local crops, so the lists are in the usual order.'}
+      </p>
       <label className="block">
         Start from a common rotation
         <select value={farm.presetId} onChange={(e) => onPreset(e.target.value)}>
           <option value="">Choose a common rotation...</option>
+          {localPresets.length > 0 && (
+            <optgroup label={`Grown around ${local.place.city || local.place.locality || 'your farm'}`}>
+              {localPresets.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </optgroup>
+          )}
           {zone && matching.length > 0 && (
             <optgroup label={`Common in a ${zone.label.toLowerCase()} climate`}>
               {matching.map((r) => (
@@ -91,7 +109,14 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
               Crop {i + 1}
               <select value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
                 <option value="">(none)</option>
-                {crops.filter((x) => x.role === 'main').map((x) => (
+                {nearCrops.length > 0 && (
+                  <optgroup label={`Known near ${local.place.city || local.place.locality || 'your farm'}`}>
+                    {nearCrops.map((x) => (
+                      <option key={x.id} value={x.id}>{x.name}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {otherCrops.map((x) => (
                   <option key={x.id} value={x.id}>{x.name}</option>
                 ))}
                 <optgroup label="Cover crops and green manures">

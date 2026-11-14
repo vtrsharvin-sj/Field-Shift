@@ -41,6 +41,9 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "wheat"
     ]
   },
   {
@@ -86,6 +89,9 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "barley"
     ]
   },
   {
@@ -131,7 +137,11 @@
       "continental",
       "cold"
     ],
-    "coverUse": true
+    "coverUse": true,
+    "aliases": [
+      "oats",
+      "oat"
+    ]
   },
   {
     "id": "rye",
@@ -177,7 +187,10 @@
       "continental",
       "cold"
     ],
-    "coverUse": true
+    "coverUse": true,
+    "aliases": [
+      "rye"
+    ]
   },
   {
     "id": "maize",
@@ -222,6 +235,11 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "maize",
+      "corn",
+      "makka"
     ]
   },
   {
@@ -266,6 +284,10 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "rice",
+      "paddy"
     ]
   },
   {
@@ -310,6 +332,12 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "sorghum",
+      "jowar",
+      "cholam",
+      "milo"
     ]
   },
   {
@@ -353,6 +381,11 @@
     "grownIn": [
       "tropical",
       "dry"
+    ],
+    "aliases": [
+      "pearl millet",
+      "bajra",
+      "kambu"
     ]
   },
   {
@@ -397,6 +430,11 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "finger millet",
+      "ragi",
+      "nachni"
     ]
   },
   {
@@ -440,6 +478,9 @@
     "grownIn": [
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "teff"
     ]
   },
   {
@@ -489,6 +530,12 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "soybean",
+      "soybeans",
+      "soya",
+      "soyabean"
     ]
   },
   {
@@ -533,6 +580,12 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "groundnut",
+      "groundnuts",
+      "peanut",
+      "peanuts"
     ]
   },
   {
@@ -577,6 +630,12 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "chickpea",
+      "chickpeas",
+      "bengal gram",
+      "garbanzo"
     ]
   },
   {
@@ -621,6 +680,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "lentil",
+      "lentils"
     ]
   },
   {
@@ -670,6 +733,13 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "dry bean",
+      "dry beans",
+      "common bean",
+      "kidney bean",
+      "haricot"
     ]
   },
   {
@@ -715,6 +785,11 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "field pea",
+      "field peas",
+      "dry pea"
     ]
   },
   {
@@ -759,6 +834,11 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "faba bean",
+      "broad bean",
+      "fava"
     ]
   },
   {
@@ -807,7 +887,12 @@
       "dry",
       "temperate"
     ],
-    "coverUse": true
+    "coverUse": true,
+    "aliases": [
+      "cowpea",
+      "cowpeas",
+      "black-eyed pea"
+    ]
   },
   {
     "id": "green-gram",
@@ -854,6 +939,12 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "green gram",
+      "mung bean",
+      "moong",
+      "mungbean"
     ]
   },
   {
@@ -901,6 +992,11 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "black gram",
+      "urad",
+      "urd"
     ]
   },
   {
@@ -950,6 +1046,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "sunflower",
+      "sunflowers"
     ]
   },
   {
@@ -999,6 +1099,11 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "canola",
+      "rapeseed",
+      "mustard"
     ]
   },
   {
@@ -1043,6 +1148,9 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "cotton"
     ]
   },
   {
@@ -1086,6 +1194,10 @@
     "grownIn": [
       "tropical",
       "dry"
+    ],
+    "aliases": [
+      "sesame",
+      "gingelly"
     ]
   },
   {
@@ -1130,6 +1242,9 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "safflower"
     ]
   },
   {
@@ -1178,6 +1293,10 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "potato",
+      "potatoes"
     ]
   },
   {
@@ -1225,6 +1344,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "tomato",
+      "tomatoes"
     ]
   },
   {
@@ -1270,6 +1393,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "onion",
+      "onions"
     ]
   },
   {
@@ -1315,6 +1442,10 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "cabbage",
+      "cabbages"
     ]
   },
   {
@@ -1358,6 +1489,10 @@
     "grownIn": [
       "tropical",
       "temperate"
+    ],
+    "aliases": [
+      "sweet potato",
+      "sweet potatoes"
     ]
   },
   {
@@ -1400,6 +1535,11 @@
     "verified": false,
     "grownIn": [
       "tropical"
+    ],
+    "aliases": [
+      "cassava",
+      "tapioca",
+      "manioc"
     ]
   },
   {
@@ -1444,6 +1584,10 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "sugarcane",
+      "sugar cane"
     ]
   },
   {
@@ -1488,6 +1632,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "sugar beet",
+      "sugarbeet"
     ]
   },
   {
@@ -1532,6 +1680,9 @@
       "tropical",
       "dry",
       "temperate"
+    ],
+    "aliases": [
+      "sunn hemp"
     ]
   },
   {
@@ -1577,6 +1728,9 @@
       "temperate",
       "continental",
       "cold"
+    ],
+    "aliases": [
+      "buckwheat"
     ]
   },
   {
@@ -1621,6 +1775,10 @@
       "dry",
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "hairy vetch",
+      "vetch"
     ]
   },
   {
@@ -1664,6 +1822,9 @@
     "grownIn": [
       "temperate",
       "continental"
+    ],
+    "aliases": [
+      "crimson clover"
     ]
   }
 ]

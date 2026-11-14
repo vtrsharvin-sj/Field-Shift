@@ -234,3 +234,50 @@ describe('soil data and confidence', () => {
     expect(cards[0].confidence.level).not.toBe('High')
   })
 })
+
+describe('local crop knowledge in scoring and suggestions', () => {
+  const prof = (known) => Object.fromEntries(crops.map((c) => [c.id, known[c.id] ? { level: known[c.id], score: weights.localCrops.levelScore[known[c.id]], snippets: [{ text: 'It is grown here.', page: 'Test page', url: 'u', level: known[c.id] }] } : { level: 'none', score: weights.localCrops.levelScore.none, snippets: [] }]))
+  const local = (known) => ({ available: true, place: { label: 'Test place', city: 'Test' }, pages: [{ title: 'Test page', url: 'u', level: 'place' }], crops: prof(known) })
+  const build = (l) => buildContext({ power, farm, crops, soils, weights, local: l })
+  const rot = { id: 'l', crops: [{ crop: 'maize', sowMonth: 6 }, { crop: 'black-gram', sowMonth: 10 }] }
+
+  it('adds a "grown locally" component only when local data exists', () => {
+    expect(evaluateRotation(rot, build(null), priorities).components.local).toBeUndefined()
+    expect(evaluateRotation(rot, build(local({ maize: 'place' })), priorities).components.local.rows).toHaveLength(2)
+  })
+  it('crops named locally score higher than crops not found', () => {
+    const known = evaluateRotation(rot, build(local({ maize: 'place', 'black-gram': 'place' })), priorities)
+    const unknown = evaluateRotation(rot, build(local({})), priorities)
+    expect(known.components.local.score).toBeGreaterThan(unknown.components.local.score)
+    expect(known.overall).toBeGreaterThan(unknown.overall)
+  })
+  it('the overall weight shares still add up to 1 with local data', () => {
+    const c = { water: { score: 100 }, income: { score: 100 }, soil: { score: 100 }, erosion: { score: 100 }, heat: { score: 100 }, pest: { score: 100 }, climate: { lowest: 100 }, local: { score: 100 } }
+    expect(overallScore(c, priorities, weights).overall).toBeCloseTo(100)
+    const none = { ...c, local: undefined }
+    expect(overallScore(none, priorities, weights).overall).toBeCloseTo(100)
+  })
+  it('suggested alternatives favour crops known in the area, and say so', () => {
+    const l = local({ sorghum: 'place', 'pearl-millet': 'place', groundnut: 'place', cowpea: 'place', cotton: 'region', 'green-gram': 'region' })
+    const ctx = build(l)
+    const comparison = compareStrategies({ baselineEntries: entries('rice', 'rice'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    cards.slice(1).forEach((c) => {
+      expect(c.components.local.score).toBeGreaterThanOrEqual(weights.localCrops.minForSuggestion)
+      expect(c.evidence.map((e) => e.text).join(' ')).toMatch(/It is grown here|Named in articles|Not found in articles|Only mentioned/)
+    })
+    expect(cards[0].gaps.join(' ')).toMatch(/Wikipedia text/)
+  })
+  it('warns when a crop is not found in articles about the area', () => {
+    const ctx = build(local({ wheat: 'place' }))
+    const comparison = compareStrategies({ baselineEntries: entries('cassava'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    expect(cards[0].risks.join(' ')).toMatch(/not described as grown around your farm/)
+  })
+  it('explains when local data could not be used', () => {
+    const ctx = buildContext({ power, farm, crops, soils, weights, local: { available: false, reason: 'offline' } })
+    const comparison = compareStrategies({ baselineEntries: entries('maize'), strategies: rotations.strategies, ctx, priorities })
+    const { cards } = buildCards({ comparison, ctx, priorities, soilInfo: null })
+    expect(cards[0].gaps.join(' ')).toMatch(/Local crop knowledge was not used: offline/)
+  })
+})

@@ -14,7 +14,7 @@ function Row({ state, name, detail }) {
   )
 }
 
-export default function DataStatus({ ctx, power, soil, sat }) {
+export default function DataStatus({ ctx, power, soil, sat, local }) {
   const s = ctx.satellite
   const loading = sat.status === 'loading'
   const errs = sat.raw?.errors ?? {}
@@ -36,6 +36,13 @@ export default function DataStatus({ ctx, power, soil, sat }) {
           <Row state="loading" name="Soil (SoilGrids, not NASA)" detail="Loading." />
         ) : (
           <Row state="off" name="Soil (SoilGrids, not NASA)" detail="No data here, so your soil type choice is used." />
+        )}
+        {local?.status === 'loading' ? (
+          <Row state="loading" name="Local crops (Wikipedia text)" detail="Loading." />
+        ) : local?.data?.available ? (
+          <Row state="ok" name="Local crops (Wikipedia text)" detail={`${local.data.pages.length} articles about ${local.data.place.label || 'your area'}. Text, not statistics.`} />
+        ) : (
+          <Row state="off" name="Local crops (Wikipedia text)" detail={local?.data?.reason ?? 'Not available.'} />
         )}
         {layer('ndvi', 'Greenness (MODIS NDVI)', s?.ndvi ? `${s.ndvi.years.join(' and ')}, 250 m, 16-day` : '', 'MODIS, 250 m')}
         {layer('et', 'Water use (MODIS evapotranspiration)', s?.et ? `${s.et.years.join(', ')}, 500 m, 8-day. Cross-check: ${s.agreement ? (s.agreement.agrees ? 'agrees with POWER' : 'disagrees with POWER') : 'not enough months'}` : '', 'MODIS, 500 m')}

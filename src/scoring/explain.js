@@ -3,6 +3,7 @@
 
 import { MONTH_NAMES } from './rotation.js'
 import { seasonMonthValues } from '../indicators/satellite.js'
+import { LEVEL_TEXT } from '../api/localCrops.js'
 
 export const COMPONENT_LABELS = {
   water: 'Water',
@@ -12,6 +13,7 @@ export const COMPONENT_LABELS = {
   heat: 'Heat and frost safety',
   pest: 'Pest and disease safety',
   climate: 'Temperature fit',
+  local: 'Grown locally',
 }
 
 const r0 = (x) => Math.round(x)
@@ -42,6 +44,8 @@ function globalGaps(ctx, soilInfo) {
   }
   gaps.push('Crop traits come from FAO tables (Kc from FAO-56, temperature ranges in the style of FAO EcoCrop) entered by the developer and not yet checked crop by crop. Ratings for income, drought tolerance and cover are generic estimates. Local varieties differ.')
   gaps.push('Sowing months were chosen from the temperature and rain record at this point, not from local planting calendars. Season lengths use mid-range crop durations. Check both with a local expert.')
+  if (ctx.local) gaps.push(`"Grown locally" comes from Wikipedia text about ${ctx.local.place.label || 'your area'} (${ctx.local.pages.length} articles), not from production statistics. It can be old or thin for small places, and a crop missing from it may still be grown.`)
+  else gaps.push(ctx.localReason ? `Local crop knowledge was not used: ${ctx.localReason}` : 'Local crop knowledge (what is grown or famous around your farm) was not available, so suggestions use climate only.')
   gaps.push('Market prices are not included. Income is a generic rating, not a profit forecast.')
   const sat = ctx.satellite
   const err = sat?.errors ?? {}
@@ -84,6 +88,11 @@ function evidenceFor(ev, ctx) {
       if (hot != null) lines.push({ text: `${name}: ground surface was above ${ctx.weights.satellite.lstHotC} C in about ${(hot * 100).toFixed(0)}% of the 8-day readings in these months.`, source: `MODIS MOD11A2, ${sat.lst.years.join(', ')}, 1 km, 8-day (NASA, via ORNL DAAC). Ground runs hotter than air.` })
     }
     if (ev.items.length && it.year > 0) lines.push({ text: `${name} is grown in year ${it.year + 1} of a ${ev.items.reduce((m, x) => Math.max(m, x.year + 1), 1)}-year cycle.`, source: 'Rotation definition' })
+    const lc = ev.components.local?.rows[i]
+    if (lc) {
+      const sn = lc.snippets[0]
+      lines.push({ text: `${name}: ${LEVEL_TEXT[lc.level]}.${sn ? ` "${sn.text}"` : ''}`, source: sn ? `${sn.page} (Wikipedia, CC BY-SA)` : 'Wikipedia articles about your area (CC BY-SA)' })
+    }
     lines.push({ text: `${name}: average temperature in this season is ${s.tmeanMean.toFixed(1)} C on growing days (coldest year ${s.tmeanMin.toFixed(1)}, warmest ${s.tmeanMax.toFixed(1)}). The crop's comfortable range is ${it.crop.tempRangeC.optMin} to ${it.crop.tempRangeC.optMax} C.`, source: `${src}; ranges in crops.json` })
     if (s.soilWetnessMean != null) lines.push({ text: `${name}: root-zone soil wetness is usually ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale.`, source: `${src}, GWETROOT (modelled, not measured)` })
   })
@@ -105,6 +114,8 @@ function benefitsFor(ev) {
   else if (c.erosion.exposedHeavyMonths.length === 0) out.push('Bare months fall outside the heaviest-rain months, which limits erosion.')
   if (c.water.irrigationNeed < 250) out.push(`Needs only about ${r0(c.water.irrigationNeed)} mm of irrigation beyond usable rain per year.`)
   if (new Set(ev.items.map((it) => it.crop.family)).size >= 2) out.push('Mixes crop families, which helps break pest and disease cycles.')
+  const localKnown = ev.items.filter((it, i) => ['place', 'region'].includes(c.local?.rows[i]?.level)).map((it) => it.crop.name)
+  if (localKnown.length) out.push(`${list(unique(localKnown))} ${localKnown.length > 1 ? 'are' : 'is'} named in articles about your area as grown there, so seed, buyers and know-how are more likely to be nearby.`)
   if (c.income.avg >= 65) out.push('Crops here have a higher generic income rating (a rating only, not a price).')
   const droughtOk = ev.items.every((it) => it.crop.droughtTolerance >= 4)
   if (droughtOk) out.push('All crops tolerate dry spells well.')
@@ -123,6 +134,8 @@ function risksFor(ev, ctx, baselineEv) {
     const cf = ev.components.climate.rows[i]
     const killC = ctx.weights.heat.frostKillByTolerance[it.crop.frostSensitivity]
     if (s.killShare >= 0.1) out.push(`${it.crop.name}: in about ${Math.round(s.killShare * 100)}% of the ${s.years} years, a night in this season fell below ${killC} C, which this crop may not survive.`)
+    const lr = ev.components.local?.rows[i]
+    if (lr && ['none', 'mention'].includes(lr.level)) out.push(`${it.crop.name}: not described as grown around your farm in the articles checked. Confirm that seed, buyers and know-how exist locally before planning around it.`)
     if (cf.sowFit < 60) out.push(`${it.crop.name}: it is cold at sowing (about ${cf.sowTemp.toFixed(1)} C in the first two weeks). Sowing may need to wait.`)
     if (cf.fit < 60) out.push(`${it.crop.name}: the average season temperature (${cf.tMean.toFixed(1)} C) is outside its comfortable range (${it.crop.tempRangeC.optMin} to ${it.crop.tempRangeC.optMax} C). Yield is likely to suffer.`)
     if (it.crop.diseaseProneness >= 3) out.push(`${it.crop.name}: ${it.crop.diseaseNotes}`)
@@ -134,7 +147,7 @@ function risksFor(ev, ctx, baselineEv) {
   if (ctx.farm.waterSource === 'borewell') out.push('Borewell yield can fall in dry years. Regional groundwater data is not included here.')
   if (ctx.scenario?.rainChangePct || ctx.scenario?.tempChangeC) out.push('These results use a what-if climate change you set. They are not a forecast.')
   if (baselineEv && ev !== baselineEv) {
-    Object.keys(COMPONENT_LABELS).forEach((k) => {
+    Object.keys(COMPONENT_LABELS).filter((k) => ev.components[k] && baselineEv.components[k]).forEach((k) => {
       const d = ev.components[k].score - baselineEv.components[k].score
       if (d <= -5) out.push(`Scores ${r0(-d)} points lower than your current rotation on ${COMPONENT_LABELS[k].toLowerCase()}.`)
     })
@@ -156,7 +169,7 @@ const si = ctx.soilInfo
 function whyFor(ev, baselineEv, kind, strategy, ctx, priorities) {
   const labels = COMPONENT_LABELS
   if (kind === 'baseline') {
-    const keys = Object.keys(labels).sort((a, b) => ev.components[b].score - ev.components[a].score)
+    const keys = Object.keys(labels).filter((k) => ev.components[k]).sort((a, b) => ev.components[b].score - ev.components[a].score)
     return [
       'This is your current rotation. It is the comparison point for the others.',
       `Its strongest area is ${labels[keys[0]].toLowerCase()} (${r0(ev.components[keys[0]].score)}/100). Its weakest is ${labels[keys[keys.length - 1]].toLowerCase()} (${r0(ev.components[keys[keys.length - 1]].score)}/100).`,
@@ -165,6 +178,7 @@ function whyFor(ev, baselineEv, kind, strategy, ctx, priorities) {
   const why = [strategy.purpose]
   const prio = ev.priorityWeights
   const gains = Object.keys(labels)
+    .filter((k) => ev.components[k] && baselineEv.components[k])
     .map((k) => ({ k, d: ev.components[k].score - baselineEv.components[k].score, weight: prio[k] ?? 0.1 }))
     .filter((g) => g.d >= 3)
     .sort((a, b) => b.d * b.weight - a.d * a.weight)
@@ -181,6 +195,10 @@ function whyFor(ev, baselineEv, kind, strategy, ctx, priorities) {
     if (k === 'income') detail = ' This is a generic rating, not a price forecast.'
     why.push(`${labels[k]} is ${r0(d)} points higher than your current rotation.${detail}${(prio[k] ?? 0) >= 0.3 ? ' This matches one of your top priorities.' : ''}`)
   })
+  if (ev.components.local) {
+    const known = ev.items.filter((it, i) => ['place', 'region'].includes(ev.components.local.rows[i].level)).map((it) => it.crop.name)
+    if (known.length) why.push(`Known in your area: ${list(unique(known))} (named in articles about your village, district or state).`)
+  }
   if (!gains.length) why.push('It does not beat your current rotation on any factor by a clear margin. It is shown for comparison.')
   return why
 }
@@ -214,6 +232,8 @@ function confidenceFor(ev, cards, ctx, unknownCount) {
     if (ag.agrees) reasons.push(`MODIS potential evapotranspiration agrees with the POWER-based estimate (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r.toFixed(2)}).`)
     else { issues += 1; reasons.push(`MODIS potential evapotranspiration and the POWER-based estimate disagree (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r?.toFixed(2) ?? 'n/a'}).`) }
   } else { issues += 1; reasons.push('No second NASA source has cross-checked POWER yet (satellite layers not loaded, failed, or too short). Confidence rises once they load and agree.') }
+  if (ctx.local) reasons.push(`Crop suggestions use what articles about ${ctx.local.place.label || 'your area'} say is grown there (text, not statistics).`)
+  else reasons.push('Local crop knowledge was not available, so suggestions use climate only.')
   if (ctx.soilInfo) reasons.push(`Soil texture comes from SoilGrids (${ctx.soilInfo.texture}), a 250 m model rather than a soil test.`)
   else reasons.push('No soil data was available, so the soil type dropdown was used.')
   if (ctx.satellite?.landCover && !ctx.satellite.landCover.isCropland) { issues += 1; reasons.push(`The land-cover map shows ${ctx.satellite.landCover.name} at this point, not cropland.`) }
@@ -281,6 +301,7 @@ export const COMPONENT_HELP = {
   heat: 'Few very hot days and frost nights during the crop seasons.',
   pest: 'No back-to-back repeats of the same crop or family, and low humidity for disease-prone crops.',
   climate: "Season temperatures stay inside the crop's comfortable range and the crop survives the coldest nights.",
+  local: 'Whether articles about your village, district, state or country describe these crops as grown there. Text-based, not statistics.',
 }
 
 /** Plain-words label for a 0-100 score. Text carries the meaning, so colour is never the only signal. */

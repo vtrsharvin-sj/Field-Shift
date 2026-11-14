@@ -160,5 +160,23 @@
     "lowCarbonBoost": 1.25,
     "phLow": 5.5,
     "phHigh": 8
+  },
+  "localCrops": {
+    "note": "How text about the farm's area (Wikipedia) becomes a \"grown locally\" score. Rough and text-based, not statistics.",
+    "levelScore": {
+      "place": 100,
+      "region": 80,
+      "country": 60,
+      "mention": 45,
+      "none": 25
+    },
+    "overallShare": 0.08,
+    "minForSuggestion": 45,
+    "poolBoostPerCrop": 3,
+    "maxSnippets": 2,
+    "maxSnippetChars": 240,
+    "placePages": 3,
+    "geosearchRadiusM": 10000,
+    "cacheDays": 30
   }
 }

@@ -112,6 +112,16 @@ export function pestScore(items, seasons, w) {
   return { score: clamp(100 - repeat - humidity), repeat, humidity, formula: `Pest and disease safety = 100 - penalty for the same crop (${w.pest.sameCropRepeatPenalty}), same family (${w.pest.sameFamilyRepeatPenalty}) or a listed bad follow-on crop (${w.pest.avoidAfterPenalty}) back to back - humidity penalty for disease-prone crops when average humidity is above ${w.pest.humidityStartPct}%.` }
 }
 
+/** How well known each crop is around the farm, from text about the area (see api/localCrops.js). Only built when local data exists. */
+export function localScore(items, local, cfg) {
+  const rows = items.map((it) => {
+    const c = local.crops[it.crop.id] ?? { level: 'none', score: cfg.levelScore.none, snippets: [] }
+    return { crop: it.crop.name, id: it.crop.id, level: c.level, score: c.score, snippets: c.snippets }
+  })
+  const score = mean(rows.map((r) => r.score))
+  return { score, rows, formula: `Grown locally = average over the crops of how well each is known around your farm: ${cfg.levelScore.place} if named in articles about your village, town or district, ${cfg.levelScore.region} for your state or region, ${cfg.levelScore.country} for your country, ${cfg.levelScore.mention} if only mentioned, ${cfg.levelScore.none} if not found. This is text from Wikipedia, not production statistics. It counts for ${Math.round(cfg.overallShare * 100)}% of the overall score when available.` }
+}
+
 /** Trapezoid fit (0 to 100): 100 inside the optimum range, falling linearly to 0 at the absolute limits. */
 export function temperatureFit(tMean, r) {
   if (tMean == null) return null
