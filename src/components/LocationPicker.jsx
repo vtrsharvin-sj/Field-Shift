@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, CircleMarker, LayersControl, useMapEvents, useMap } from 'react-leaflet'
+import { useEffect, useRef, useState } from 'react'
+import { MapContainer, TileLayer, CircleMarker, LayersControl, Tooltip, useMapEvents, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { googleMapsLink, parseCoordinates, searchPlaces } from '../api/geocode.js'
+import { googleMapsLink, parseCoordinates, searchPlaces, suggestPlaces } from '../api/geocode.js'
 import GoogleMapPicker, { GOOGLE_KEY } from './GoogleMapPicker.jsx'
 
 function ClickHandler({ onPick }) {
@@ -9,11 +9,13 @@ function ClickHandler({ onPick }) {
   return null
 }
 
-function Recenter({ lat, lon }) {
+/** Moves the Leaflet map to the chosen point, or fits all search results when there are several. */
+function Recenter({ lat, lon, places }) {
   const map = useMap()
   useEffect(() => {
-    if (Number.isFinite(lat) && Number.isFinite(lon)) map.setView([lat, lon], Math.max(map.getZoom(), 7))
-  }, [lat, lon, map])
+    if (places.length > 1) map.fitBounds(places.map((p) => [p.lat, p.lon]), { padding: [30, 30], maxZoom: 14 })
+    else if (Number.isFinite(lat) && Number.isFinite(lon)) map.setView([lat, lon], Math.max(map.getZoom(), 7))
+  }, [lat, lon, places, map])
   return null
 }
 
@@ -22,30 +24,53 @@ export default function LocationPicker({ farm, onChange }) {
   const lon = Number(farm.lon)
   const valid = farm.lat !== '' && farm.lon !== '' && Number.isFinite(lat) && Number.isFinite(lon)
   const [query, setQuery] = useState('')
-  const [places, setPlaces] = useState([])
+  const [places, setPlaces] = useState([]) // full search results (also drawn on the map)
+  const [hints, setHints] = useState([]) // quick suggestions while typing
   const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
   const [paste, setPaste] = useState('')
   const [googleFailed, setGoogleFailed] = useState('')
   const useGoogle = Boolean(GOOGLE_KEY) && !googleFailed
+  const typing = useRef(0)
 
-  function applyPaste(text) {
-    setPaste(text)
-    const p = parseCoordinates(text)
-    if (p) {
-      onChange({ lat: p.lat, lon: p.lon })
-      setMsg(`Location set to ${p.lat}, ${p.lon}.`)
-    } else if (text.trim()) setMsg('Could not read a location from that. Paste coordinates like 10.95, 77.1 or a full Google Maps link.')
+  // Suggestions while typing (Photon is made for this). A full search with every source runs on Enter or the Search button.
+  useEffect(() => {
+    const q = query.trim()
+    const id = ++typing.current
+    if (q.length < 3) { setHints([]); return undefined }
+    const timer = setTimeout(async () => {
+      try {
+        const near = valid ? { lat, lon } : null
+        const found = await suggestPlaces(q, { near })
+        if (id === typing.current) setHints(found)
+      } catch {
+        if (id === typing.current) setHints([])
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [query]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function choose(p) {
+    onChange({ lat: Number(p.lat.toFixed(4)), lon: Number(p.lon.toFixed(4)) })
+    setPlaces([])
+    setHints([])
+    setMsg(`Location set to ${p.name.split(',')[0]}.`)
   }
 
   async function search(e) {
-    e.preventDefault()
+    e?.preventDefault()
+    setHints([])
+    if (query.trim().length < 2) return setMsg('Type at least 2 letters.')
+    setBusy(true)
     setMsg('Searching...')
     try {
-      const found = await searchPlaces(query)
+      const found = await searchPlaces(query, { near: valid ? { lat, lon } : null })
       setPlaces(found)
-      setMsg(found.length ? `${found.length} place${found.length === 1 ? '' : 's'} found. Choose one:` : 'No place found. Try a different spelling, add the district or country, or tap the map.')
+      setMsg(found.length ? `${found.length} place${found.length === 1 ? '' : 's'} found. Choose one below or tap a marker on the map.` : 'No place found. Try a different spelling, add the district or country, or tap the map.')
     } catch (err) {
       setMsg(`Search failed: ${err.message} You can still tap the map.`)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -61,24 +86,38 @@ export default function LocationPicker({ farm, onChange }) {
     )
   }
 
+  function applyPaste(text) {
+    setPaste(text)
+    const p = parseCoordinates(text)
+    if (p) {
+      onChange({ lat: p.lat, lon: p.lon })
+      setMsg(`Location set to ${p.lat}, ${p.lon}.`)
+    } else if (text.trim()) setMsg('Could not read a location from that. Paste coordinates like 10.95, 77.1 or a full Google Maps link.')
+  }
+
+  const list = places.length ? places : hints
   return (
     <section aria-labelledby="loc-h">
       <h2 id="loc-h">Where is your farm?</h2>
-      <p className="lead">Search for a village, town, farm or landmark by name, tap the map, or use your location. This works anywhere on land.</p>
-      <form className="searchrow" onSubmit={search}>
+      <p className="lead">Search for a village, town, farm, shop, temple, college or any landmark by name, tap the map (landmarks are labelled), or use your location. This works anywhere on land.</p>
+      <form className="searchrow" onSubmit={search} role="search">
         <label>
-          Search by place name
-          <input type="search" value={query} placeholder="For example: a village, a district, a farm or a landmark" onChange={(e) => setQuery(e.target.value)} />
+          Search by place or landmark name
+          <input type="search" value={query} autoComplete="off" placeholder="For example: Brookefields Mall, Marudhamalai temple, a village or a college" onChange={(e) => { setQuery(e.target.value); setPlaces([]) }} />
         </label>
-        <button type="submit" className="secondary">Search</button>
+        <button type="submit" className="secondary" disabled={busy}>{busy ? 'Searching...' : 'Search'}</button>
         <button type="button" className="secondary" onClick={locate}>Use my location</button>
       </form>
       {msg && <p className="note" aria-live="polite">{msg}</p>}
-      {places.length > 0 && (
-        <ul className="places">
-          {places.map((p) => (
-            <li key={`${p.lat},${p.lon}`}>
-              <button type="button" className="link" onClick={() => { onChange({ lat: p.lat, lon: p.lon }); setPlaces([]) }}>{p.name}</button>
+      {list.length > 0 && (
+        <ul className="places" aria-label={places.length ? 'Search results' : 'Suggestions'}>
+          {list.map((p, i) => (
+            <li key={`${p.lat},${p.lon},${i}`}>
+              <button type="button" className="link" onClick={() => choose(p)}>
+                <span className="pnum" aria-hidden="true">{places.length ? i + 1 : '•'}</span>
+                <span>{p.name}</span>
+              </button>
+              <small>{[p.kind, p.source].filter(Boolean).join(' · ')}</small>
             </li>
           ))}
         </ul>
@@ -86,9 +125,9 @@ export default function LocationPicker({ farm, onChange }) {
       {googleFailed && <p className="hint">Google Maps could not load ({googleFailed}). Showing the free OpenStreetMap map instead.</p>}
       <div className="map-wrap">
         {useGoogle ? (
-          <GoogleMapPicker lat={lat} lon={lon} valid={valid} onPick={(la, lo) => onChange({ lat: la, lon: lo })} onFail={setGoogleFailed} />
+          <GoogleMapPicker lat={lat} lon={lon} valid={valid} places={places} onPick={(la, lo) => onChange({ lat: la, lon: lo })} onPickPlace={choose} onFail={setGoogleFailed} />
         ) : (
-          <MapContainer center={valid ? [lat, lon] : [20, 20]} zoom={valid ? 8 : 2} scrollWheelZoom={false} style={{ height: '320px', width: '100%' }}>
+          <MapContainer center={valid ? [lat, lon] : [20, 20]} zoom={valid ? 8 : 2} scrollWheelZoom={false} style={{ height: '340px', width: '100%' }}>
             <LayersControl position="topright">
               <LayersControl.BaseLayer checked name="Street map">
                 <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -98,16 +137,20 @@ export default function LocationPicker({ farm, onChange }) {
               </LayersControl.BaseLayer>
             </LayersControl>
             <ClickHandler onPick={(la, lo) => onChange({ lat: la, lon: lo })} />
-            <Recenter lat={lat} lon={lon} />
+            <Recenter lat={lat} lon={lon} places={places} />
+            {places.map((p, i) => (
+              <CircleMarker key={`${p.lat},${p.lon},${i}`} center={[p.lat, p.lon]} radius={9} pathOptions={{ color: '#1e4e8c', fillColor: '#4f8fe0', fillOpacity: 0.9 }} eventHandlers={{ click: () => choose(p) }}>
+                <Tooltip>{i + 1}. {p.name.split(',')[0]}</Tooltip>
+              </CircleMarker>
+            ))}
             {valid && <CircleMarker center={[lat, lon]} radius={10} pathOptions={{ color: '#7a1f00', fillColor: '#ff6a2b', fillOpacity: 0.8 }} />}
           </MapContainer>
         )}
       </div>
       <label className="block">
-        Paste coordinates or a Google Maps link
+        Or paste coordinates or a Google Maps link
         <input type="text" value={paste} placeholder="10.95, 77.1  or  https://www.google.com/maps/@10.95,77.1,15z" onChange={(e) => applyPaste(e.target.value)} />
       </label>
-      <p className="hint">Tip: in Google Maps, right-click your field and click the coordinates at the top of the menu to copy them, then paste here.</p>
       <div className="grid3">
         <label>
           Latitude
@@ -126,4 +169,3 @@ export default function LocationPicker({ farm, onChange }) {
     </section>
   )
 }
-

@@ -257,3 +257,9 @@ dd { margin-left: 0; color: var(--muted); }
 .localist blockquote { margin: .4rem 0 0; padding: .3rem .8rem; border-left: 3px solid var(--line); color: var(--muted); font-size: .92rem; }
 .localist cite { font-style: normal; font-size: .85rem; }
 .pages { padding-left: 1.2rem; }
+
+.places li { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: center; }
+.places li .link { display: flex; gap: .6rem; align-items: baseline; text-decoration: none; color: var(--ink); width: 100%; }
+.places li .link:hover span:last-child { text-decoration: underline; }
+.pnum { flex: none; width: 1.5rem; height: 1.5rem; display: inline-grid; place-items: center; border-radius: 50%; background: var(--blue-100); color: var(--blue-700); font-weight: 800; font-size: .8rem; }
+.places small { text-align: right; max-width: 12rem; }

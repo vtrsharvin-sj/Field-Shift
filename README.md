@@ -27,6 +27,8 @@ npm run build    # static site in dist/
 
 ## Google Maps key
 
+The key needs **Maps JavaScript API**. For Google to also find shops, businesses and every landmark by name, enable **Places API (New)** and **Geocoding API** on the same key. Without them the search still finds landmarks through OpenStreetMap (Photon, Nominatim), Wikipedia and Open-Meteo, and the map still labels landmarks.
+
 The location step uses Google Maps when `VITE_GOOGLE_MAPS_API_KEY` is set, and falls back to OpenStreetMap when it is missing or rejected.
 
 - **Local:** the key is in `.env` (ignored by git). `.env.example` shows the format.

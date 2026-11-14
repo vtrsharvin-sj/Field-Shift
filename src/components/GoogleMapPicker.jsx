@@ -22,11 +22,18 @@ export function loadGoogleMaps(key) {
   return loader
 }
 
-/** Google map that reports clicks as coordinates. Calls onFail(message) so the parent can fall back to another map. */
-export default function GoogleMapPicker({ lat, lon, valid, onPick, onFail }) {
+/**
+ * Google map that reports clicks as coordinates.
+ * - Opens as a normal road map so landmarks, shops, temples, colleges and other places are labelled. The Satellite button shows farmland.
+ * - Clicking a landmark icon picks that landmark's position.
+ * - Search results are drawn as numbered markers; clicking one chooses it.
+ * Calls onFail(message) so the parent can fall back to another map.
+ */
+export default function GoogleMapPicker({ lat, lon, valid, places = [], onPick, onPickPlace, onFail }) {
   const box = useRef(null)
   const map = useRef(null)
   const marker = useRef(null)
+  const resultMarkers = useRef([])
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -36,14 +43,19 @@ export default function GoogleMapPicker({ lat, lon, valid, onPick, onFail }) {
         if (dead || !box.current) return
         map.current = new maps.Map(box.current, {
           center: valid ? { lat, lng: lon } : { lat: 20, lng: 20 },
-          zoom: valid ? 9 : 2,
-          mapTypeId: 'hybrid',
+          zoom: valid ? 11 : 2,
+          mapTypeId: 'roadmap',
+          mapTypeControl: true,
           streetViewControl: false,
           fullscreenControl: true,
+          clickableIcons: true,
           gestureHandling: 'cooperative',
         })
         marker.current = new maps.Marker({ map: map.current, position: valid ? { lat, lng: lon } : null, title: 'Your farm' })
-        map.current.addListener('click', (e) => onPick(Number(e.latLng.lat().toFixed(4)), Number(e.latLng.lng().toFixed(4))))
+        map.current.addListener('click', (e) => {
+          if (e.placeId && e.stop) e.stop() // pick the landmark's position instead of opening Google's info window
+          onPick(Number(e.latLng.lat().toFixed(4)), Number(e.latLng.lng().toFixed(4)))
+        })
         setReady(true)
       })
       .catch((e) => !dead && onFail(e.message))
@@ -56,8 +68,26 @@ export default function GoogleMapPicker({ lat, lon, valid, onPick, onFail }) {
     const pos = { lat, lng: lon }
     marker.current.setPosition(pos)
     map.current.panTo(pos)
-    if (map.current.getZoom() < 7) map.current.setZoom(9)
+    if (map.current.getZoom() < 9) map.current.setZoom(11)
   }, [ready, valid, lat, lon])
 
-  return <div ref={box} className="gmap" role="application" aria-label="Google map. Click to choose your farm location." />
+  // Numbered markers for the search results, and fit the map to all of them.
+  useEffect(() => {
+    if (!ready) return
+    const maps = window.google.maps
+    resultMarkers.current.forEach((m) => m.setMap(null))
+    resultMarkers.current = places.map((p, i) => {
+      const m = new maps.Marker({ map: map.current, position: { lat: p.lat, lng: p.lon }, label: { text: String(i + 1), color: '#fff', fontWeight: '700' }, title: p.name })
+      m.addListener('click', () => onPickPlace?.(p))
+      return m
+    })
+    if (places.length > 1) {
+      const b = new maps.LatLngBounds()
+      places.forEach((p) => b.extend({ lat: p.lat, lng: p.lon }))
+      map.current.fitBounds(b, 40)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, places])
+
+  return <div ref={box} className="gmap" role="application" aria-label="Google map. Click a spot or a landmark to choose your farm location." />
 }
