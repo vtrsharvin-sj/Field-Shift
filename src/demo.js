@@ -1,9 +1,9 @@
-// The demo farm: Coimbatore, Tamil Nadu. Only the location and farmer choices are fixed here.
+// The demo farm: farmland in Coimbatore district, Tamil Nadu (MODIS land cover class 12, cropland, checked). The city centre itself is classed urban. Only the location and farmer choices are fixed here.
 // Climate numbers are NEVER stored in code: they always come from the NASA POWER response.
 
 export const DEMO_FARM = {
-  lat: 11.0168,
-  lon: 76.9558,
+  lat: 10.95,
+  lon: 77.1,
   soilType: 'loam',
   waterSource: 'borewell',
   waterAvailability: 'medium',

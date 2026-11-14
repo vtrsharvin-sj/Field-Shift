@@ -2,6 +2,7 @@
 // Every sentence is generated from the scored numbers or from fields in the data files. No free-floating claims.
 
 import { MONTH_NAMES } from './rotation.js'
+import { seasonMonthValues } from '../indicators/satellite.js'
 
 export const COMPONENT_LABELS = {
   water: 'Water',
@@ -38,10 +39,20 @@ function globalGaps(ctx, soilInfo) {
   else gaps.push(`SoilGrids (ISRIC, not NASA) suggested ${soilInfo.suggestedType} soil here (sand ${r0(soilInfo.sandPct)}%, clay ${r0(soilInfo.clayPct)}%). It is about 250 m resolution and was not used in the scores other than to pre-fill the dropdown.`)
   gaps.push('Crop traits, sowing months and market notes are estimates from the project brief and are not yet verified against TNAU, ICAR or FAO.')
   gaps.push('Market prices are not included. Income is a generic rating, not a profit forecast.')
-  gaps.push('Slope and elevation (SRTM) are not included, so erosion risk ignores how steep the field is.')
-  gaps.push('Satellite greenness (MODIS NDVI) is not integrated. Bare-field months come from the sowing calendar, not from satellite images.')
-  gaps.push('Satellite rainfall (GPM) and soil moisture (SMAP) are not integrated, so NASA POWER rainfall was not cross-checked against a second source.')
-  gaps.push('Regional groundwater trend (GRACE) is not integrated. Borewell reliability is taken from the availability level you chose.')
+  const sat = ctx.satellite
+  const err = sat?.errors ?? {}
+  if (sat?.slope) gaps.push(`Slope (${sat.slope.slopePct.toFixed(1)}%, ${sat.slope.classLabel}) comes from ${sat.slope.source}, not NASA SRTM, at a single point. Field slope can differ.`)
+  else gaps.push(`Slope was not loaded${err.slope ? ` (${err.slope})` : ''}, so erosion risk ignores how steep the field is. NASA SRTM itself is not integrated (no free browser access).`)
+  if (sat?.ndvi) gaps.push(`MODIS NDVI (250 m, ${sat.ndvi.years.join(' and ')} only) shows how green the land is now. It describes your current land use, so it is only compared with your current rotation. Bare months for the other rotations come from the sowing calendar.`)
+  else gaps.push(`Satellite greenness (MODIS NDVI) was not loaded${err.ndvi ? ` (${err.ndvi})` : ''}. Bare-field months come from the sowing calendar, not from satellite images.`)
+  if (sat?.et) gaps.push(`MODIS evapotranspiration (500 m) covers ${sat.et.years.join(', ')} only (one year), so it is a snapshot, not a long-term average.`)
+  else gaps.push(`MODIS evapotranspiration was not loaded${err.et ? ` (${err.et})` : ''}, so crop water use and water stress were not observed.`)
+  if (sat?.lst) gaps.push(`Ground temperature (MODIS, 1 km) covers ${sat.lst.years.join(', ')} only and is a mixed pixel, not your field. The hot-ground threshold (${ctx.weights.satellite.lstHotC} C) is a generic estimate.`)
+  else gaps.push(`Ground temperature (MODIS land surface temperature) was not loaded${err.lst ? ` (${err.lst})` : ''}.`)
+  if (!sat?.landCover) gaps.push(`Cropland check (MODIS land cover) was not loaded${err.landCover ? ` (${err.landCover})` : ''}.`)
+  gaps.push('Satellite rainfall (GPM) and soil moisture (SMAP) are not integrated: both need a NASA Earthdata login, which a static site cannot hold safely. POWER rain already uses satellite rainfall inside its model, but it was not cross-checked against a second source.')
+  gaps.push('Regional groundwater trend (GRACE) is not integrated (needs Earthdata login, and its resolution of about 300 km is too coarse for a field). Borewell reliability is taken from the availability level you chose.')
+  if (sat?.agreement && !sat.agreement.agrees) gaps.push(`MODIS potential ET and the POWER-based ET0 disagree (${sat.agreement.pctDiff.toFixed(0)}% difference, correlation ${sat.agreement.r?.toFixed(2)}). Water results are less certain.`)
   const m = ctx.power.meta
   if (m.missingParams.length) gaps.push(`NASA POWER did not provide: ${m.missingParams.join(', ')}. Indicators that need them were left out.`)
   if (m.completeness < 1) gaps.push(`${Math.round((1 - m.completeness) * 1000) / 10}% of daily NASA POWER values were missing (-999) and were excluded.`)
@@ -58,10 +69,21 @@ function evidenceFor(ev, ctx) {
     const name = it.crop.name
     lines.push({ text: `${name} (${monthSpan(it.sowMonth, it.durationDays)}): average rain ${r0(s.rainMean)} mm per season, varying about ${r0(s.rainCV ?? 0)}% from year to year. Crop water need is about ${r0(row.demand)} mm (Kc ${it.crop.cropCoefficientKc} x ET0 ${r0(s.et0Mean)} mm${it.crop.extraWaterMm ? `, plus ${it.crop.extraWaterMm} mm extra for flooding and land preparation` : ''}).`, source: `${src}. ET0 by Hargreaves-Samani from temperature and latitude.` })
     lines.push({ text: `${name}: longest dry stretch averages ${r0(s.longestDryStretchMean)} days (worst year ${s.longestDryStretchMax}); ${s.heatDaysMean.toFixed(1)} very hot days (above ${it.crop.heatThresholdC} C) and ${s.frostDaysMean.toFixed(1)} frost nights per season.`, source: src })
+    const sat = ctx.satellite
+    if (sat?.et) {
+      const ratio = seasonMonthValues(sat.et.ratio, it.sowMonth, it.durationDays)
+      const et = seasonMonthValues(sat.et.et, it.sowMonth, it.durationDays)
+      if (ratio != null && et != null) lines.push({ text: `${name}: in these months the satellite measured water use at about ${(ratio * 100).toFixed(0)}% of the potential (ET / potential ET = ${ratio.toFixed(2)}, about ${et.toFixed(0)} mm a month). This describes the current land use, not this crop.`, source: `MODIS MOD16A2GF, ${sat.et.years.join(', ')}, 500 m, 8-day (NASA, via ORNL DAAC)` })
+    }
+    if (sat?.lst) {
+      const hot = seasonMonthValues(sat.lst.hotShare, it.sowMonth, it.durationDays)
+      if (hot != null) lines.push({ text: `${name}: ground surface was above ${ctx.weights.satellite.lstHotC} C in about ${(hot * 100).toFixed(0)}% of the 8-day readings in these months.`, source: `MODIS MOD11A2, ${sat.lst.years.join(', ')}, 1 km, 8-day (NASA, via ORNL DAAC). Ground runs hotter than air.` })
+    }
     if (s.soilWetnessMean != null) lines.push({ text: `${name}: root-zone soil wetness is usually ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale.`, source: `${src}, GWETROOT (modelled, not measured)` })
   })
   const e = ev.components.erosion
   lines.push({ text: `Months with no crop in the field: ${monthList(e.bareMonths)}. ${e.exposedHeavyMonths.length ? `Of these, ${monthList(e.exposedHeavyMonths)} are heavy-rain months.` : 'None of them are among the heaviest-rain months.'}`, source: `Sowing calendar in rotations.json plus heavy-rain days (above ${r0(ctx.heavyMm)} mm) from ${src}` })
+  if (ctx.satellite?.slope) lines.push({ text: `Slope at the farm point is about ${ctx.satellite.slope.slopePct.toFixed(1)}% (${ctx.satellite.slope.classLabel}), which takes ${e.slopePenalty} points off erosion protection.`, source: ctx.satellite.slope.source })
   lines.push({ text: `Crop traits used: ${list(unique(ev.items.map((it) => `${it.crop.name} (nitrogen fixing ${it.crop.nFixing}/5, drought tolerance ${it.crop.droughtTolerance}/5, ground cover ${it.crop.erosionCover}/5)`)))}.`, source: 'crops.json (estimates, not yet verified)' })
   return lines
 }
@@ -104,6 +126,12 @@ function risksFor(ev, ctx, baselineEv) {
       if (d <= -5) out.push(`Scores ${r0(-d)} points lower than your current rotation on ${COMPONENT_LABELS[k].toLowerCase()}.`)
     })
   }
+const sat = ctx.satellite
+  if (sat?.landCover && !sat.landCover.isCropland) out.push(`The satellite land-cover map classes this point as ${sat.landCover.name}, not cropland (MODIS MCD12Q1, 500 m). Check the coordinates; results may describe a different land use.`)
+  if (sat?.et) {
+    const low = ev.items.some((it) => { const r = seasonMonthValues(sat.et.ratio, it.sowMonth, it.durationDays); return r != null && r < ctx.weights.satellite.waterStressRatioLow })
+    if (low) out.push('Satellite ET was low compared with potential ET during a crop season here, which can mean the land was short of water (or not cropped). Ask a local expert.')
+  }
   out.push('Sowing months are typical values. Local variety, rainfall onset and advice from an extension officer should set the real dates.')
   return unique(out)
 }
@@ -143,6 +171,8 @@ function whatWouldChange(ev, ctx) {
   return out
 }
 
+const crops_unverified = (evs) => evs.some((e) => e.items.some((it) => !it.crop.verified))
+
 function confidenceFor(ev, cards, ctx, unknownCount) {
   const w = ctx.weights.confidence
   const m = ctx.power.meta
@@ -157,7 +187,13 @@ function confidenceFor(ev, cards, ctx, unknownCount) {
   const margin = others.length ? Math.min(...others.map((o) => Math.abs(o - ev.overall))) : null
   if (margin != null && margin < w.closeMargin) { issues += 1; reasons.push(`Its score is within ${margin.toFixed(1)} points of another rotation, so the ranking could flip.`) }
   else if (margin != null) reasons.push(`Its score is ${margin.toFixed(1)} points from the nearest other rotation.`)
-  if (unknownCount >= 4) { issues += 1; reasons.push(`${unknownCount} local factors are unknown (soil test, market prices, field-level data, slope), so local expert review is needed.`) }
+  if (unknownCount >= (w.unknownFactorsIssueAt ?? 3)) { issues += 1; reasons.push(`${unknownCount} local factors are unknown or unverified (soil test, market prices, field-level data${ctx.satellite?.slope ? '' : ', slope'}${crops_unverified(cards) ? ', unverified crop table' : ''}), so local expert review is needed.`) }
+  const ag = ctx.satellite?.agreement
+  if (ag) {
+    if (ag.agrees) reasons.push(`MODIS potential evapotranspiration agrees with the POWER-based estimate (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r.toFixed(2)}).`)
+    else { issues += 1; reasons.push(`MODIS potential evapotranspiration and the POWER-based estimate disagree (${ag.pctDiff.toFixed(0)}% difference, correlation ${ag.r?.toFixed(2) ?? 'n/a'}).`) }
+  } else reasons.push('No second NASA source was available to cross-check POWER.')
+  if (ctx.satellite?.landCover && !ctx.satellite.landCover.isCropland) { issues += 1; reasons.push(`The land-cover map shows ${ctx.satellite.landCover.name} at this point, not cropland.`) }
   if (ctx.scenario?.rainChangePct || ctx.scenario?.tempChangeC) { issues += 1; reasons.push('A what-if scenario is applied.') }
   const level = issues === 0 ? 'High' : issues === 1 ? 'Medium' : 'Low'
   return { level, reasons, margin }
@@ -176,7 +212,16 @@ export function buildCards({ comparison, ctx, priorities, soilInfo }) {
   const allEv = evs.map((e) => e.ev)
   const ranked = [...allEv].sort((a, b) => b.overall - a.overall)
   const gaps = globalGaps(ctx, soilInfo)
-  const unknownCount = 4
+  const unknownCount = 3 + (ctx.satellite?.slope ? 0 : 1) + (crops_unverified(allEv) ? 1 : 0)
+  const ndviLine = (ev) => {
+    const n = ctx.satellite?.ndvi
+    if (!n) return null
+    const calBare = ev.components.erosion.bareMonths
+    const sees = n.lowMonths
+    const fmt = (ms) => (ms.length ? monthList(ms) : 'none')
+    return { text: `Satellite greenness (NDVI below ${ctx.weights.satellite.ndviBare}) at this point: ${fmt(sees)}. Your sowing calendar says bare: ${fmt(calBare)}. ${fmt(sees) === fmt(calBare) ? 'They match.' : 'They differ: sowing dates, the 250 m pixel mixing several fields, or a different land use can explain this.'}`, source: `MODIS MOD13Q1 NDVI, ${n.years.join(' and ')}, 250 m, 16-day (NASA, via ORNL DAAC)` }
+  }
+  const lcLine = ctx.satellite?.landCover ? { text: `Land cover at the point: ${ctx.satellite.landCover.name}${ctx.satellite.landCover.isCropland ? '.' : ' (not cropland: check your coordinates).'}`, source: `MODIS MCD12Q1 ${ctx.satellite.landCover.year}, 500 m (NASA, via ORNL DAAC)` } : null
   const cards = evs.map(({ ev, kind, strategy, label, variants }) => {
     const cardGaps = [...gaps]
     if (ev.items.some((it) => it.crop.id === 'rice')) cardGaps.push('Extra water for rice (puddling and seepage) is a rough estimate in crops.json.')
@@ -191,7 +236,7 @@ export function buildCards({ comparison, ctx, priorities, soilInfo }) {
       components: ev.components,
       bareFraction: ev.components.erosion.bare,
       why: whyFor(ev, baseEv, kind, strategy, ctx, priorities),
-      evidence: evidenceFor(ev, ctx),
+      evidence: [...evidenceFor(ev, ctx), ...(kind === 'baseline' && ndviLine(ev) ? [ndviLine(ev)] : []), ...(lcLine ? [lcLine] : [])],
       benefits: benefitsFor(ev),
       gaps: cardGaps,
       risks: risksFor(ev, ctx, kind === 'baseline' ? null : baseEv),

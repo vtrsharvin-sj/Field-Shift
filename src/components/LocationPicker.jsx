@@ -42,7 +42,7 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
           <input type="number" step="0.0001" value={farm.lon} onChange={(e) => onChange({ lon: e.target.value })} />
         </label>
         <button type="button" className="secondary" onClick={onUseDemo}>
-          Use demo farm (Coimbatore)
+          Use demo farm (Coimbatore district)
         </button>
       </div>
     </section>

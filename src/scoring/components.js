@@ -69,17 +69,18 @@ export function soilScore(items, w) {
   return { score, parts: { base: w.soil.base, nFix, roots, diversity, repeat, families }, formula: `Soil health = ${w.soil.base} base + nitrogen-fixing crops (up to ${w.soil.nFixingPoints}) + deep roots (up to ${w.soil.rootDepthPoints}) + crop-family variety (${w.soil.diversityPerFamily} per extra family, up to ${w.soil.diversityMax}) - penalty for repeating the same crop (${w.soil.sameCropRepeatPenalty}) or family (${w.soil.sameFamilyRepeatPenalty}) back to back.` }
 }
 
-export function erosionScore(items, monthly, w) {
+export function erosionScore(items, monthly, w, slope = null) {
   const bare = bareFractionByMonth(items)
   const heavy = monthly.map((m) => m.heavyRainDays ?? m.rainMm ?? 0)
   const totalHeavy = sum(heavy)
   const bareRainShare = totalHeavy ? sum(bare.map((b, m) => b * heavy[m])) / totalHeavy : 0
   const days = items.map((it) => it.durationDays)
   const cover = weightedMean(items.map((it) => it.crop.erosionCover), days) / 5
-  const score = clamp(100 - w.erosion.bareRainPoints * bareRainShare - w.erosion.coverPoints * (1 - cover))
+  const slopePenalty = slope?.penalty ?? 0
+  const score = clamp(100 - w.erosion.bareRainPoints * bareRainShare - w.erosion.coverPoints * (1 - cover) - slopePenalty)
   const bareMonths = bare.map((b, m) => (b >= w.erosion.bareMonthFraction ? m + 1 : null)).filter(Boolean)
   const exposedHeavyMonths = bareMonths.filter((m) => heavy[m - 1] >= 0.75 * Math.max(...heavy) && Math.max(...heavy) > 0)
-  return { score, bare, bareMonths, exposedHeavyMonths, bareRainShare, cover, formula: `Erosion protection = 100 - ${w.erosion.bareRainPoints} x (share of heavy-rain days that fall in bare months) - ${w.erosion.coverPoints} x (1 - average ground cover of the crops / 5). A month is "bare" if at least ${w.erosion.bareMonthFraction * 100}% of it has no crop. Slope is not included (no elevation data).` }
+  return { score, bare, bareMonths, exposedHeavyMonths, bareRainShare, cover, slopePenalty, formula: `Erosion protection = 100 - ${w.erosion.bareRainPoints} x (share of heavy-rain days that fall in bare months) - ${w.erosion.coverPoints} x (1 - average ground cover of the crops / 5). A month is "bare" if at least ${w.erosion.bareMonthFraction * 100}% of it has no crop. ${slope ? `Slope penalty: ${slope.penalty} points (${slope.classLabel} slope, about ${slope.slopePct.toFixed(1)}%).` : 'Slope is not included (elevation not loaded).'}` }
 }
 
 export function incomeScore(items, w) {

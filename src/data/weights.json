@@ -71,7 +71,8 @@
     "minCompleteness": 0.95,
     "goodYears": 15,
     "closeMargin": 3,
-    "wideMargin": 8
+    "wideMargin": 8,
+    "unknownFactorsIssueAt": 3
   },
   "scenario": {
     "rainChangeRangePct": [
@@ -81,6 +82,38 @@
     "tempChangeRangeC": [
       0,
       3
+    ]
+  },
+  "satellite": {
+    "note": "Thresholds for NASA satellite layers. NDVI and hot-ground thresholds are generic estimates: verify locally.",
+    "ndviBare": 0.3,
+    "lstHotC": 45,
+    "waterStressRatioLow": 0.4,
+    "agreement": {
+      "maxPctDiff": 35,
+      "minCorr": 0.5
+    },
+    "slopeClasses": [
+      {
+        "maxPct": 2,
+        "label": "flat",
+        "penalty": 0
+      },
+      {
+        "maxPct": 5,
+        "label": "gentle",
+        "penalty": 5
+      },
+      {
+        "maxPct": 10,
+        "label": "moderate",
+        "penalty": 12
+      },
+      {
+        "maxPct": null,
+        "label": "steep",
+        "penalty": 25
+      }
     ]
   }
 }

@@ -1,5 +1,6 @@
 // Scoring engine: climate context -> component scores -> weighted overall score. Pure and deterministic.
 
+import { etSummary, landCoverInfo, lstSummary, ndviSummary, sourceAgreement } from '../indicators/satellite.js'
 import { annualTrends, heavyRainThreshold, indexDays, monthlyClimatology, seasonIndicators } from '../indicators/climate.js'
 import { erosionScore, heatScore, incomeScore, pestScore, soilScore, waterScore } from './components.js'
 import { resolveRotation, validateRotation } from './rotation.js'
@@ -18,7 +19,23 @@ export function applyScenario(days, { rainChangePct = 0, tempChangeC = 0 } = {})
 }
 
 /** Build everything the scoring needs from one POWER download. */
-export function buildContext({ power, farm, crops, soils, weights, scenario }) {
+/** Summaries of the optional NASA satellite layers. Any layer that is missing or failed stays null. */
+export function summarizeSatellite(raw, powerMonthly, w) {
+  if (!raw) return null
+  const et = raw.et ? etSummary(raw.et) : null
+  return {
+    ndvi: raw.ndvi ? ndviSummary(raw.ndvi, w.satellite.ndviBare) : null,
+    et,
+    lst: raw.lst ? lstSummary(raw.lst, w.satellite.lstHotC) : null,
+    landCover: raw.landCover ? { ...raw.landCover, ...landCoverInfo(raw.landCover.igbpClass) } : null,
+    slope: raw.slope ?? null,
+    agreement: et ? sourceAgreement(et.pet, powerMonthly.map((m) => m.et0Mm), w.satellite.agreement) : null,
+    errors: raw.errors ?? {},
+    raw,
+  }
+}
+
+export function buildContext({ power, farm, crops, soils, weights, scenario, satellite }) {
   const trends = annualTrends(power.days) // trends always use the real, unchanged record
   const days = applyScenario(power.days, scenario)
   const index = indexDays(days)
@@ -35,7 +52,9 @@ export function buildContext({ power, farm, crops, soils, weights, scenario }) {
     }
     return seasonCache.get(key)
   }
-  return { power, farm, weights, soil, cropsById, trends, monthly, heavyMm, lat, seasonFor, scenario: scenario ?? {} }
+  const active = scenario && (scenario.rainChangePct || scenario.tempChangeC)
+  const realMonthly = active ? monthlyClimatology(power.days, { lat, heavyMm: heavyRainThreshold(power.days) }) : monthly
+  return { power, farm, weights, soil, cropsById, trends, monthly, heavyMm, lat, seasonFor, scenario: scenario ?? {}, satellite: summarizeSatellite(satellite, realMonthly, weights) }
 }
 
 /** Convert slider values (0 to 10) into weights that sum to 1. All zero means equal weights. */
@@ -69,7 +88,7 @@ export function evaluateRotation(rotation, ctx, priorities) {
     water: waterScore(items, seasons, ctx.farm, w, ctx.soil),
     heat: heatScore(items, seasons, w),
     soil: soilScore(items, w),
-    erosion: erosionScore(items, ctx.monthly, w),
+    erosion: erosionScore(items, ctx.monthly, w, ctx.satellite?.slope ?? null),
     income: incomeScore(items, w),
     pest: pestScore(items, seasons, w),
   }

@@ -31,6 +31,12 @@ npm run build    # static site in dist/, deploy to GitHub Pages or Vercel
 3. Compare POWER rainfall with a local rain record. At Coimbatore POWER gives about 1,200 mm a year, which looks high for the area.
 4. Check the SoilGrids endpoint (it did not answer during development, so the fallback path is what was tested).
 
+## NASA satellite layers (optional button in the app)
+
+Loaded on demand through the ORNL DAAC MODIS web service (free, no login, 1 to 3 minutes): MODIS NDVI (MOD13Q1, 2023-24), evapotranspiration (MOD16A2GF, 2024), land surface temperature (MOD11A2, 2024) and land cover (MCD12Q1). Each layer fails independently and is then listed under information gaps. MODIS potential ET is cross-checked against the POWER-based ET0 and the result feeds confidence.
+
+Slope comes from the Open-Meteo elevation service (Copernicus DEM, ESA, not NASA) because free SRTM services block browser requests.
+
 ## Not integrated
 
-MODIS NDVI, SMAP, GPM, SRTM, GRACE. The app lists each one under information gaps.
+GPM IMERG, SMAP and GRACE need an Earthdata login (SMAP also returned no data from the keyless service). The app lists each one under information gaps. NASA SRTM itself is not used.
