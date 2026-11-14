@@ -33,6 +33,7 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = 
   const box = useRef(null)
   const map = useRef(null)
   const marker = useRef(null)
+  const halo = useRef(null)
   const resultMarkers = useRef([])
   const [ready, setReady] = useState(false)
 
@@ -51,7 +52,9 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = 
           clickableIcons: true,
           gestureHandling: 'cooperative',
         })
-        marker.current = new maps.Marker({ map: map.current, position: valid ? { lat, lng: lon } : null, title: 'Your farm' })
+        // A clean dot with a soft halo instead of the default red pin.
+        halo.current = new maps.Marker({ map: map.current, position: valid ? { lat, lng: lon } : null, clickable: false, zIndex: 1, icon: { path: maps.SymbolPath.CIRCLE, scale: 20, fillColor: '#2f7a57', fillOpacity: 0.22, strokeWeight: 0 } })
+        marker.current = new maps.Marker({ map: map.current, position: valid ? { lat, lng: lon } : null, title: 'Your farm', zIndex: 2, icon: { path: maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#22543d', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 } })
         map.current.addListener('click', (e) => {
           if (e.placeId && e.stop) e.stop() // pick the landmark's position instead of opening Google's info window
           onPick(Number(e.latLng.lat().toFixed(4)), Number(e.latLng.lng().toFixed(4)))
@@ -67,6 +70,7 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = 
     if (!ready || !valid) return
     const pos = { lat, lng: lon }
     marker.current.setPosition(pos)
+    halo.current?.setPosition(pos)
     map.current.panTo(pos)
     if (flyTo) map.current.setZoom(flyTo.zoom) // chosen from the search: show it close up
     else if (map.current.getZoom() < 9) map.current.setZoom(11)
@@ -78,7 +82,7 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = 
     const maps = window.google.maps
     resultMarkers.current.forEach((m) => m.setMap(null))
     resultMarkers.current = places.map((p, i) => {
-      const m = new maps.Marker({ map: map.current, position: { lat: p.lat, lng: p.lon }, label: { text: String(i + 1), color: '#fff', fontWeight: '700' }, title: p.name })
+      const m = new maps.Marker({ map: map.current, position: { lat: p.lat, lng: p.lon }, zIndex: 3, label: { text: String(i + 1), color: '#ffffff', fontWeight: '700', fontSize: '12px' }, title: p.name, icon: { path: maps.SymbolPath.CIRCLE, scale: 12, fillColor: '#1e4e8c', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 } })
       m.addListener('click', () => onPickPlace?.(p))
       return m
     })

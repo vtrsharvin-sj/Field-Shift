@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { suggestPlaces } from '../api/geocode.js'
+import KindIcon from './KindIcon.jsx'
 import { highlightParts, kindLabel, moveIndex, rankSuggestions, splitName } from './placeSearchUtils.js'
 
 /**
@@ -108,7 +109,7 @@ export default function PlaceSearch({ value, onValueChange, near, onChoose, onSe
         <ul className="combo-list" id={`${listId}-list`} role="listbox" aria-label="Suggestions">
           {showLocate && (
             <li id={`${listId}-o0`} role="option" aria-selected={active === 0} className={`combo-opt locate ${active === 0 ? 'on' : ''}`} onMouseDown={(e) => { e.preventDefault(); pick({ locate: true }) }} onMouseEnter={() => setActive(0)}>
-              <span className="pin" aria-hidden="true">◎</span>
+              <span className="pin" aria-hidden="true"><KindIcon locate /></span>
               <span className="txt"><strong>Use my current location</strong></span>
             </li>
           )}
@@ -116,7 +117,7 @@ export default function PlaceSearch({ value, onValueChange, near, onChoose, onSe
             const { main, rest } = splitName(p.name)
             return (
               <li key={`${p.lat},${p.lon},${i}`} id={`${listId}-o${i}`} role="option" aria-selected={active === i} className={`combo-opt ${active === i ? 'on' : ''}`} onMouseDown={(e) => { e.preventDefault(); pick(p) }} onMouseEnter={() => setActive(i)}>
-                <span className="pin" aria-hidden="true">📍</span>
+                <span className="pin" aria-hidden="true"><KindIcon kind={p.kind} /></span>
                 <span className="txt">
                   <span className="main">{highlightParts(main, q).map((s, k) => (s.match ? <b key={k}>{s.text}</b> : <span key={k}>{s.text}</span>))}</span>
                   {rest && <span className="rest">{rest}</span>}

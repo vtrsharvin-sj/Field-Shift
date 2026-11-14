@@ -119,11 +119,12 @@ export default function LocationPicker({ farm, onChange }) {
             <ClickHandler onPick={(la, lo) => onChange({ lat: la, lon: lo })} />
             <Recenter lat={lat} lon={lon} places={places} flyTo={flyTo} />
             {places.map((p, i) => (
-              <CircleMarker key={`${p.lat},${p.lon},${i}`} center={[p.lat, p.lon]} radius={9} pathOptions={{ color: '#1e4e8c', fillColor: '#4f8fe0', fillOpacity: 0.9 }} eventHandlers={{ click: () => choose(p) }}>
+              <CircleMarker key={`${p.lat},${p.lon},${i}`} center={[p.lat, p.lon]} radius={9} pathOptions={{ color: '#ffffff', weight: 3, fillColor: '#1e4e8c', fillOpacity: 1 }} eventHandlers={{ click: () => choose(p) }}>
                 <Tooltip>{i + 1}. {p.name.split(',')[0]}</Tooltip>
               </CircleMarker>
             ))}
-            {valid && <CircleMarker center={[lat, lon]} radius={10} pathOptions={{ color: '#7a1f00', fillColor: '#ff6a2b', fillOpacity: 0.8 }} />}
+            {valid && <CircleMarker center={[lat, lon]} radius={18} pathOptions={{ stroke: false, fillColor: '#2f7a57', fillOpacity: 0.22 }} interactive={false} />}
+            {valid && <CircleMarker center={[lat, lon]} radius={8} pathOptions={{ color: '#ffffff', weight: 3, fillColor: '#22543d', fillOpacity: 1 }} />}
           </MapContainer>
         )}
       </div>

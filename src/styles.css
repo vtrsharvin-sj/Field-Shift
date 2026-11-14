@@ -285,3 +285,7 @@ dd { margin-left: 0; color: var(--muted); }
 .combo-empty, .combo-foot { padding: .55rem 1rem; color: var(--muted); font-size: .88rem; }
 .combo-foot { border-top: 1px solid var(--line); }
 @media (max-width: 860px) { .searchrow { grid-template-columns: 1fr; } .combo-opt .kind { display: none; } }
+
+.combo-opt .pin { color: var(--muted); }
+.combo-opt.on .pin { background: #fff; color: var(--blue-700); }
+.combo-opt.locate .pin { color: var(--blue-700); }

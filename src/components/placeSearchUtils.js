@@ -33,20 +33,31 @@ export function moveIndex(current, step, count) {
   return (current + step + count) % count
 }
 
+const GROUPS = [
+  ['shop', 'Shop', /mall|supermarket|marketplace|department|shop|store/],
+  ['worship', 'Temple or worship', /worship|temple|church|mosque|religious|shrine|monastery/],
+  ['school', 'School or college', /college|university|school/],
+  ['health', 'Health', /hospital|clinic|doctors|pharmacy/],
+  ['transport', 'Transport', /station|bus|railway|stop|aerodrome|airport/],
+  ['food', 'Food', /restaurant|cafe|food|fast food/],
+  ['nature', 'Nature or park', /park|garden|nature|peak|water|lake|river/],
+  ['farm', 'Farm', /farm|farmland|orchard|vineyard/],
+  ['place', 'Place', /city|town|village|hamlet|suburb|neighbourhood|district|county|state|place|administrative/],
+]
+
+/** Which icon family a kind of place belongs to: shop, worship, school, health, transport, food, nature, farm, place or other. */
+export function kindGroup(kind) {
+  const k = String(kind ?? '').toLowerCase()
+  return GROUPS.find((g) => g[2].test(k))?.[0] ?? 'other'
+}
+
 /** Short word for the kind of place, for the little label on each suggestion. */
 export function kindLabel(kind) {
   const k = String(kind ?? '').toLowerCase()
   if (!k) return ''
-  if (/mall|supermarket|marketplace|department|shop|store/.test(k)) return 'Shop'
-  if (/worship|temple|church|mosque|religious|shrine/.test(k)) return 'Temple or worship'
-  if (/college|university|school/.test(k)) return 'School or college'
-  if (/hospital|clinic|doctors|pharmacy/.test(k)) return 'Health'
-  if (/station|bus|railway|stop|aerodrome|airport/.test(k)) return 'Transport'
-  if (/restaurant|cafe|food|fast food/.test(k)) return 'Food'
-  if (/park|garden|nature|peak|water|lake|river/.test(k)) return 'Nature or park'
-  if (/farm|farmland|orchard|vineyard/.test(k)) return 'Farm'
-  if (/city|town|village|hamlet|suburb|neighbourhood|district|county|state|place|administrative/.test(k)) return 'Place'
-  return k.length > 22 ? k.slice(0, 21) + '…' : k
+  const g = GROUPS.find((x) => x[2].test(k))
+  if (g) return g[1]
+  return k.length > 22 ? `${k.slice(0, 21)}…` : k
 }
 
 const words = (s) => String(s ?? '').toLowerCase().split(/[^a-z0-9\u00C0-\u024F]+/).filter(Boolean)

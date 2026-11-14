@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { highlightParts, kindLabel, moveIndex, rankSuggestions, splitName } from './placeSearchUtils.js'
+import { highlightParts, kindGroup, kindLabel, moveIndex, rankSuggestions, splitName } from './placeSearchUtils.js'
 
 describe('place search dropdown helpers', () => {
   it('splits the place name from its address', () => {
@@ -33,6 +33,15 @@ describe('place search dropdown helpers', () => {
     expect(kindLabel('college')).toBe('School or college')
     expect(kindLabel('bus stop')).toBe('Transport')
     expect(kindLabel('')).toBe('')
+  })
+  it('groups kinds of place so each gets an icon', () => {
+    expect(kindGroup('mall')).toBe('shop')
+    expect(kindGroup('place of worship')).toBe('worship')
+    expect(kindGroup('college')).toBe('school')
+    expect(kindGroup('bus stop')).toBe('transport')
+    expect(kindGroup('village')).toBe('place')
+    expect(kindGroup('something odd')).toBe('other')
+    expect(kindGroup('')).toBe('other')
   })
   it('ranks clear text matches first and keeps the rest in the service order', () => {
     const items = [
