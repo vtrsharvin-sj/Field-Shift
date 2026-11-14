@@ -1,0 +1,109 @@
+// Component scores (0 to 100). Each returns { score, inputs, formula } so the UI can show how it was computed.
+// Every threshold comes from weights.json (passed in as `w`). No hidden constants.
+
+import { clamp, mean, sum } from '../indicators/stats.js'
+import { bareFractionByMonth, totalCropDays } from './rotation.js'
+
+const weightedMean = (values, weights) => {
+  const tw = sum(weights)
+  return tw ? sum(values.map((v, i) => v * weights[i])) / tw : 0
+}
+
+/** Pairs of consecutive crops in the yearly cycle, including last -> first (the next year). */
+export function cropPairs(items) {
+  return items.map((it, i) => [it.crop, items[(i + 1) % items.length].crop])
+}
+
+export function waterScore(items, seasons, farm, w, soil) {
+  const total = totalCropDays(items)
+  const annual = w.waterSourceAllowanceMmPerYear[farm.waterSource]?.[farm.waterAvailability] ?? 0
+  const rows = items.map((it, i) => {
+    const s = seasons[i]
+    const allowance = total ? (annual * it.durationDays) / total : 0
+    const demand = it.crop.cropCoefficientKc * s.et0Mean + it.crop.extraWaterMm
+    const effRain = s.rainMean * soil.rainEfficiency
+    const dryRain = Math.max(0, s.rainMean * (1 - (w.water.dryYearCvFactor * (s.rainCV ?? 0)) / 100)) * soil.rainEfficiency
+    const ratioMean = Math.max(0, demand - (effRain + allowance)) / demand
+    const ratioDry = Math.max(0, demand - (dryRain + allowance)) / demand
+    const tolFactor = w.water.toleranceBase - w.water.tolerancePerPoint * it.crop.droughtTolerance
+    const shortfallPenalty = clamp(100 * (w.water.meanShare * ratioMean + w.water.dryYearShare * ratioDry) * tolFactor)
+    const varPenalty = it.crop.droughtTolerance <= 2 ? clamp((s.rainCV ?? 0) - w.water.variabilityCvPct, 0, 100) * w.water.variabilityPenaltyPerPct : 0
+    const fit = clamp(100 - shortfallPenalty - Math.min(varPenalty, w.water.variabilityPenaltyMax))
+    return { crop: it.crop.name, demand, effRain, dryRain, allowance, fit, irrigationNeed: Math.max(0, demand - effRain), ratioMean, ratioDry, rainCV: s.rainCV }
+  })
+  const fit = weightedMean(rows.map((r) => r.fit), items.map((it) => it.durationDays))
+  const irrigationNeed = sum(rows.map((r) => r.irrigationNeed))
+  const frugality = 100 - clamp((irrigationNeed / w.water.irrigationScaleMm) * 100)
+  const score = clamp(w.water.fitShare * fit + w.water.frugalityShare * frugality)
+  return {
+    score,
+    rows,
+    fit,
+    frugality,
+    irrigationNeed,
+    formula: `Water score = ${w.water.fitShare} x water fit + ${w.water.frugalityShare} x water saving. Water fit compares crop water demand (Kc x ET0 + extra water) with usable rain plus the water-source allowance, in an average year (${w.water.meanShare}) and a dry year (${w.water.dryYearShare}), scaled by drought tolerance. Water saving = 100 - irrigation needed / ${w.water.irrigationScaleMm} mm.`,
+  }
+}
+
+export function heatScore(items, seasons, w) {
+  const rows = items.map((it, i) => {
+    const s = seasons[i]
+    const share = s.heatDaysMean / it.durationDays
+    const heatPenalty = clamp(((share - w.heat.toleratedHeatShare) / (w.heat.fullPenaltyHeatShare - w.heat.toleratedHeatShare)) * 100)
+    const frostPenalty = clamp(s.frostDaysMean * w.heat.frostPenaltyPerNight * (it.crop.frostSensitivity / 5))
+    return { crop: it.crop.name, heatDays: s.heatDaysMean, heatThresholdC: it.crop.heatThresholdC, frostDays: s.frostDaysMean, fit: clamp(100 - heatPenalty - frostPenalty) }
+  })
+  const score = weightedMean(rows.map((r) => r.fit), items.map((it) => it.durationDays))
+  return { score, rows, formula: `Heat and frost fit = 100 - heat penalty - frost penalty. Heat penalty is 0 while very hot days stay under ${w.heat.toleratedHeatShare * 100}% of the season and reaches 100 at ${w.heat.fullPenaltyHeatShare * 100}%. Frost penalty is ${w.heat.frostPenaltyPerNight} points per frost night, scaled by the crop's frost sensitivity.` }
+}
+
+export function soilScore(items, w) {
+  const crops = items.map((it) => it.crop)
+  const nFix = mean(crops.map((c) => c.nFixing / 5)) * w.soil.nFixingPoints
+  const roots = mean(crops.map((c) => c.rootDepth / 5)) * w.soil.rootDepthPoints
+  const families = new Set(crops.map((c) => c.family)).size
+  const diversity = Math.min(w.soil.diversityMax, (families - 1) * w.soil.diversityPerFamily)
+  const pairs = cropPairs(items)
+  const repeat = mean(pairs.map(([a, b]) => (a.id === b.id ? w.soil.sameCropRepeatPenalty : a.family === b.family ? w.soil.sameFamilyRepeatPenalty : 0)))
+  const score = clamp(w.soil.base + nFix + roots + diversity - repeat)
+  return { score, parts: { base: w.soil.base, nFix, roots, diversity, repeat, families }, formula: `Soil health = ${w.soil.base} base + nitrogen-fixing crops (up to ${w.soil.nFixingPoints}) + deep roots (up to ${w.soil.rootDepthPoints}) + crop-family variety (${w.soil.diversityPerFamily} per extra family, up to ${w.soil.diversityMax}) - penalty for repeating the same crop (${w.soil.sameCropRepeatPenalty}) or family (${w.soil.sameFamilyRepeatPenalty}) back to back.` }
+}
+
+export function erosionScore(items, monthly, w) {
+  const bare = bareFractionByMonth(items)
+  const heavy = monthly.map((m) => m.heavyRainDays ?? m.rainMm ?? 0)
+  const totalHeavy = sum(heavy)
+  const bareRainShare = totalHeavy ? sum(bare.map((b, m) => b * heavy[m])) / totalHeavy : 0
+  const days = items.map((it) => it.durationDays)
+  const cover = weightedMean(items.map((it) => it.crop.erosionCover), days) / 5
+  const score = clamp(100 - w.erosion.bareRainPoints * bareRainShare - w.erosion.coverPoints * (1 - cover))
+  const bareMonths = bare.map((b, m) => (b >= w.erosion.bareMonthFraction ? m + 1 : null)).filter(Boolean)
+  const exposedHeavyMonths = bareMonths.filter((m) => heavy[m - 1] >= 0.75 * Math.max(...heavy) && Math.max(...heavy) > 0)
+  return { score, bare, bareMonths, exposedHeavyMonths, bareRainShare, cover, formula: `Erosion protection = 100 - ${w.erosion.bareRainPoints} x (share of heavy-rain days that fall in bare months) - ${w.erosion.coverPoints} x (1 - average ground cover of the crops / 5). A month is "bare" if at least ${w.erosion.bareMonthFraction * 100}% of it has no crop. Slope is not included (no elevation data).` }
+}
+
+export function incomeScore(items, w) {
+  const avg = mean(items.map((it) => (it.crop.incomePotential / 5) * 100))
+  const days = totalCropDays(items)
+  const intensity = w.income.baseShare + w.income.intensityShare * Math.min(1, days / w.income.fullIntensityDays)
+  return { score: clamp(avg * intensity), avg, intensity, cropDays: days, formula: `Income = average crop income rating (1-5, scaled to 100) x (${w.income.baseShare} + ${w.income.intensityShare} x days in the field / ${w.income.fullIntensityDays}, at most 1). Ratings are generic estimates, not prices.` }
+}
+
+export function pestScore(items, seasons, w) {
+  const pairs = cropPairs(items)
+  const pairPenalties = pairs.map(([a, b]) => {
+    if (a.id === b.id) return w.pest.sameCropRepeatPenalty
+    if (a.family === b.family) return w.pest.sameFamilyRepeatPenalty
+    if (b.rotationCompatibility.avoidAfter.includes(a.id)) return w.pest.avoidAfterPenalty
+    return 0
+  })
+  const repeat = mean(pairPenalties)
+  const humidity = mean(
+    items.map((it, i) => {
+      const rh = seasons[i].rhMean
+      if (rh == null || it.crop.diseaseProneness < 3 || rh <= w.pest.humidityStartPct) return 0
+      return Math.min(w.pest.humidityPenaltyMax, (rh - w.pest.humidityStartPct) * w.pest.humidityPenaltyPerPct * (it.crop.diseaseProneness / 5))
+    }),
+  )
+  return { score: clamp(100 - repeat - humidity), repeat, humidity, formula: `Pest and disease safety = 100 - penalty for the same crop (${w.pest.sameCropRepeatPenalty}), same family (${w.pest.sameFamilyRepeatPenalty}) or a listed bad follow-on crop (${w.pest.avoidAfterPenalty}) back to back - humidity penalty for disease-prone crops when average humidity is above ${w.pest.humidityStartPct}%.` }
+}

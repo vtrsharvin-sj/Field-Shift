@@ -1,0 +1,30 @@
+{
+  "note": "rainEfficiency is the share of rain assumed to be usable by the crop (the rest runs off or drains). These are rough estimates for structure, to verify locally.",
+  "types": [
+    {
+      "id": "sandy",
+      "label": "Sandy (drains fast)",
+      "rainEfficiency": 0.7
+    },
+    {
+      "id": "loam",
+      "label": "Loam (balanced)",
+      "rainEfficiency": 0.8
+    },
+    {
+      "id": "clay",
+      "label": "Clay (holds water)",
+      "rainEfficiency": 0.85
+    },
+    {
+      "id": "black-cotton",
+      "label": "Black cotton soil (holds water, cracks when dry)",
+      "rainEfficiency": 0.9
+    },
+    {
+      "id": "red",
+      "label": "Red soil (light, drains quickly)",
+      "rainEfficiency": 0.75
+    }
+  ]
+}

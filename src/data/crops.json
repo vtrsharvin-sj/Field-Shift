@@ -1,0 +1,478 @@
+[
+  {
+    "id": "rice",
+    "name": "Rice",
+    "localName": "Nel",
+    "family": "Poaceae",
+    "seasons": [
+      "Kharif",
+      "Rabi"
+    ],
+    "durationDays": [
+      110,
+      150
+    ],
+    "waterNeed": 5,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 2,
+    "erosionCover": 2,
+    "incomePotential": 3,
+    "heatThresholdC": 35,
+    "cropCoefficientKc": 1.15,
+    "extraWaterMm": 400,
+    "frostSensitivity": 3,
+    "diseaseProneness": 4,
+    "diseaseNotes": "Blast and sheath blight rise in humid, cloudy spells.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "rice"
+      ]
+    },
+    "marketNotes": "Puddled rice needs extra water for land preparation and seepage (extra water is an estimate).",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "maize",
+    "name": "Maize",
+    "localName": "Makkacholam",
+    "family": "Poaceae",
+    "seasons": [
+      "Kharif",
+      "Rabi"
+    ],
+    "durationDays": [
+      100,
+      120
+    ],
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 4,
+    "heatThresholdC": 35,
+    "cropCoefficientKc": 1,
+    "extraWaterMm": 0,
+    "frostSensitivity": 3,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Fall armyworm and stem borer are common; heat at flowering cuts grain set.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "maize"
+      ]
+    },
+    "marketNotes": "Market price varies a lot by year and buyer.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "sorghum",
+    "name": "Sorghum (cholam)",
+    "localName": "Cholam",
+    "family": "Poaceae",
+    "seasons": [
+      "Kharif",
+      "Rabi"
+    ],
+    "durationDays": [
+      100,
+      120
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 4,
+    "erosionCover": 3,
+    "incomePotential": 2,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Shoot fly in late sowings; grain mold if rain falls at grain filling.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sorghum"
+      ]
+    },
+    "marketNotes": "Mainly fodder and food demand; price is usually modest.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "pearl-millet",
+    "name": "Pearl millet (kambu)",
+    "localName": "Kambu",
+    "family": "Poaceae",
+    "seasons": [
+      "Kharif"
+    ],
+    "durationDays": [
+      75,
+      90
+    ],
+    "waterNeed": 1,
+    "droughtTolerance": 5,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 2,
+    "heatThresholdC": 40,
+    "cropCoefficientKc": 0.8,
+    "extraWaterMm": 0,
+    "frostSensitivity": 1,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Downy mildew in wet, humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "pearl-millet"
+      ]
+    },
+    "marketNotes": "Nutri-cereal demand is rising but local price needs checking.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "finger-millet",
+    "name": "Finger millet (ragi)",
+    "localName": "Ragi",
+    "family": "Poaceae",
+    "seasons": [
+      "Kharif"
+    ],
+    "durationDays": [
+      100,
+      120
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Blast disease in humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "finger-millet"
+      ]
+    },
+    "marketNotes": "Stable local demand; check local mandi price.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "groundnut",
+    "name": "Groundnut",
+    "localName": "Nilakadalai",
+    "family": "Fabaceae",
+    "seasons": [
+      "Kharif",
+      "Summer"
+    ],
+    "durationDays": [
+      100,
+      120
+    ],
+    "waterNeed": 3,
+    "droughtTolerance": 3,
+    "nFixing": 4,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 4,
+    "heatThresholdC": 36,
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Leaf spots and collar rot in humid weather; pod rot in waterlogged soil.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "groundnut"
+      ]
+    },
+    "marketNotes": "Oil and nut prices swing between seasons.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "black-gram",
+    "name": "Black gram (urad)",
+    "localName": "Ulundu",
+    "family": "Fabaceae",
+    "seasons": [
+      "Kharif",
+      "Rabi"
+    ],
+    "durationDays": [
+      65,
+      75
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 3,
+    "nFixing": 4,
+    "rootDepth": 2,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "cropCoefficientKc": 0.8,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Yellow mosaic virus spreads by whitefly; also affects green gram and cowpea.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "black-gram",
+        "green-gram",
+        "cowpea"
+      ]
+    },
+    "marketNotes": "Pulse prices are often supported; check current rate.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "green-gram",
+    "name": "Green gram (moong)",
+    "localName": "Pachai payaru",
+    "family": "Fabaceae",
+    "seasons": [
+      "Kharif",
+      "Summer"
+    ],
+    "durationDays": [
+      60,
+      70
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 3,
+    "nFixing": 4,
+    "rootDepth": 2,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "cropCoefficientKc": 0.8,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Yellow mosaic virus and powdery mildew.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "black-gram",
+        "green-gram",
+        "cowpea"
+      ]
+    },
+    "marketNotes": "Pulse prices are often supported; check current rate.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "cowpea",
+    "name": "Cowpea (cover or forage)",
+    "localName": "Thattaipayaru",
+    "family": "Fabaceae",
+    "seasons": [
+      "Kharif",
+      "Summer"
+    ],
+    "durationDays": [
+      60,
+      90
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 5,
+    "rootDepth": 3,
+    "erosionCover": 5,
+    "incomePotential": 2,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Aphids and yellow mosaic virus.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "black-gram",
+        "green-gram",
+        "cowpea"
+      ]
+    },
+    "marketNotes": "Mostly used as fodder or cover; low direct income.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "sunflower",
+    "name": "Sunflower",
+    "localName": "Suryakanthi",
+    "family": "Asteraceae",
+    "seasons": [
+      "Rabi",
+      "Summer"
+    ],
+    "durationDays": [
+      90,
+      100
+    ],
+    "waterNeed": 3,
+    "droughtTolerance": 3,
+    "nFixing": 0,
+    "rootDepth": 5,
+    "erosionCover": 2,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Downy mildew and head rot in humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sunflower"
+      ]
+    },
+    "marketNotes": "Oilseed price varies; check local buyers.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "cotton",
+    "name": "Cotton",
+    "localName": "Paruthi",
+    "family": "Malvaceae",
+    "seasons": [
+      "Kharif"
+    ],
+    "durationDays": [
+      150,
+      180
+    ],
+    "waterNeed": 4,
+    "droughtTolerance": 3,
+    "nFixing": 0,
+    "rootDepth": 4,
+    "erosionCover": 2,
+    "incomePotential": 4,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 0.9,
+    "extraWaterMm": 0,
+    "frostSensitivity": 3,
+    "diseaseProneness": 3,
+    "diseaseNotes": "Bollworm and whitefly; boll rot with late rain.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "cotton"
+      ]
+    },
+    "marketNotes": "Price depends on mill demand and grade; check locally.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "sesame",
+    "name": "Sesame (gingelly)",
+    "localName": "Ellu",
+    "family": "Pedaliaceae",
+    "seasons": [
+      "Summer"
+    ],
+    "durationDays": [
+      80,
+      90
+    ],
+    "waterNeed": 1,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 2,
+    "incomePotential": 3,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 0.8,
+    "extraWaterMm": 0,
+    "frostSensitivity": 3,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Phyllody and root rot; waterlogging kills seedlings.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sesame"
+      ]
+    },
+    "marketNotes": "Edible oil demand is steady; check local price.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "sugarcane",
+    "name": "Sugarcane",
+    "localName": "Karumbu",
+    "family": "Poaceae",
+    "seasons": [
+      "Annual"
+    ],
+    "durationDays": [
+      300,
+      360
+    ],
+    "waterNeed": 5,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 4,
+    "incomePotential": 4,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 1,
+    "extraWaterMm": 0,
+    "frostSensitivity": 2,
+    "diseaseProneness": 2,
+    "diseaseNotes": "Red rot and borers; ratoon crops carry disease over.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sugarcane"
+      ]
+    },
+    "marketNotes": "Price is usually set with the sugar mill; check the current rate.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  },
+  {
+    "id": "sunn-hemp",
+    "name": "Sunn hemp (green manure)",
+    "localName": "Sanal",
+    "family": "Fabaceae",
+    "seasons": [
+      "Kharif"
+    ],
+    "durationDays": [
+      45,
+      60
+    ],
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 5,
+    "rootDepth": 3,
+    "erosionCover": 5,
+    "incomePotential": 1,
+    "heatThresholdC": 38,
+    "cropCoefficientKc": 0.8,
+    "extraWaterMm": 0,
+    "frostSensitivity": 1,
+    "diseaseProneness": 1,
+    "diseaseNotes": "Few serious pests; grown to be ploughed in, so there is no crop income.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sunn-hemp"
+      ]
+    },
+    "marketNotes": "No market: value comes from soil improvement.",
+    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
+    "verified": false
+  }
+]

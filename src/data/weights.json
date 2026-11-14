@@ -1,0 +1,86 @@
+{
+  "note": "All scoring weights and thresholds live here. Edit this file to change how scores are computed.",
+  "overall": {
+    "priorityShare": 0.8,
+    "heatShare": 0.1,
+    "pestShare": 0.1
+  },
+  "waterSourceAllowanceMmPerYear": {
+    "rainfed": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "borewell": {
+      "low": 300,
+      "medium": 600,
+      "high": 1000
+    },
+    "canal": {
+      "low": 400,
+      "medium": 800,
+      "high": 1400
+    }
+  },
+  "water": {
+    "fitShare": 0.7,
+    "frugalityShare": 0.3,
+    "irrigationScaleMm": 800,
+    "meanShare": 0.6,
+    "dryYearShare": 0.4,
+    "toleranceBase": 1.3,
+    "tolerancePerPoint": 0.15,
+    "variabilityCvPct": 25,
+    "variabilityPenaltyPerPct": 0.3,
+    "variabilityPenaltyMax": 15,
+    "dryYearCvFactor": 0.84
+  },
+  "heat": {
+    "toleratedHeatShare": 0.05,
+    "fullPenaltyHeatShare": 0.3,
+    "frostPenaltyPerNight": 10
+  },
+  "soil": {
+    "base": 30,
+    "nFixingPoints": 30,
+    "rootDepthPoints": 10,
+    "diversityPerFamily": 10,
+    "diversityMax": 20,
+    "sameCropRepeatPenalty": 30,
+    "sameFamilyRepeatPenalty": 15
+  },
+  "erosion": {
+    "bareRainPoints": 60,
+    "coverPoints": 40,
+    "bareMonthFraction": 0.5
+  },
+  "income": {
+    "baseShare": 0.75,
+    "intensityShare": 0.25,
+    "fullIntensityDays": 300
+  },
+  "pest": {
+    "sameCropRepeatPenalty": 40,
+    "sameFamilyRepeatPenalty": 25,
+    "avoidAfterPenalty": 20,
+    "humidityStartPct": 75,
+    "humidityPenaltyPerPct": 1.5,
+    "humidityPenaltyMax": 25
+  },
+  "confidence": {
+    "minCompleteness": 0.95,
+    "goodYears": 15,
+    "closeMargin": 3,
+    "wideMargin": 8
+  },
+  "scenario": {
+    "rainChangeRangePct": [
+      -30,
+      30
+    ],
+    "tempChangeRangeC": [
+      0,
+      3
+    ]
+  }
+}

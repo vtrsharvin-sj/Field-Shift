@@ -1,0 +1,250 @@
+{
+  "note": "Each rotation is one yearly cycle. sowMonth is 1-12; the crop occupies the field from the 1st of that month for its mid-point duration. Sowing months follow typical Coimbatore (Tamil Nadu) practice and must be checked locally.",
+  "baselinePresets": [
+    {
+      "id": "rice-rice",
+      "name": "Rice, then rice",
+      "crops": [
+        {
+          "crop": "rice",
+          "sowMonth": 6
+        },
+        {
+          "crop": "rice",
+          "sowMonth": 11
+        }
+      ]
+    },
+    {
+      "id": "cotton-fallow",
+      "name": "Cotton, then fallow",
+      "crops": [
+        {
+          "crop": "cotton",
+          "sowMonth": 8
+        }
+      ]
+    },
+    {
+      "id": "maize-fallow",
+      "name": "Maize, then fallow",
+      "crops": [
+        {
+          "crop": "maize",
+          "sowMonth": 6
+        }
+      ]
+    },
+    {
+      "id": "sorghum-fallow",
+      "name": "Sorghum, then fallow",
+      "crops": [
+        {
+          "crop": "sorghum",
+          "sowMonth": 6
+        }
+      ]
+    },
+    {
+      "id": "groundnut-fallow",
+      "name": "Groundnut, then fallow",
+      "crops": [
+        {
+          "crop": "groundnut",
+          "sowMonth": 6
+        }
+      ]
+    },
+    {
+      "id": "sugarcane",
+      "name": "Sugarcane (whole year)",
+      "crops": [
+        {
+          "crop": "sugarcane",
+          "sowMonth": 2
+        }
+      ]
+    }
+  ],
+  "strategies": [
+    {
+      "id": "legume",
+      "label": "Legume-integrated rotation",
+      "purpose": "Adds a nitrogen-fixing crop to cut fertilizer need and break pest cycles.",
+      "candidates": [
+        {
+          "id": "maize-blackgram",
+          "name": "Maize, then black gram",
+          "crops": [
+            {
+              "crop": "maize",
+              "sowMonth": 6
+            },
+            {
+              "crop": "black-gram",
+              "sowMonth": 10
+            }
+          ]
+        },
+        {
+          "id": "groundnut-sorghum",
+          "name": "Groundnut, then sorghum",
+          "crops": [
+            {
+              "crop": "groundnut",
+              "sowMonth": 6
+            },
+            {
+              "crop": "sorghum",
+              "sowMonth": 10
+            }
+          ]
+        },
+        {
+          "id": "rice-blackgram",
+          "name": "Rice, then black gram",
+          "crops": [
+            {
+              "crop": "rice",
+              "sowMonth": 6
+            },
+            {
+              "crop": "black-gram",
+              "sowMonth": 11
+            }
+          ]
+        },
+        {
+          "id": "sorghum-greengram",
+          "name": "Sorghum, then green gram",
+          "crops": [
+            {
+              "crop": "sorghum",
+              "sowMonth": 6
+            },
+            {
+              "crop": "green-gram",
+              "sowMonth": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "water-saving",
+      "label": "Water-saving / drought-tolerant rotation",
+      "purpose": "Swaps high-water crops for millets, sorghum or pulses.",
+      "candidates": [
+        {
+          "id": "pearlmillet-greengram",
+          "name": "Pearl millet, then green gram",
+          "crops": [
+            {
+              "crop": "pearl-millet",
+              "sowMonth": 6
+            },
+            {
+              "crop": "green-gram",
+              "sowMonth": 9
+            }
+          ]
+        },
+        {
+          "id": "fingermillet-blackgram",
+          "name": "Finger millet, then black gram",
+          "crops": [
+            {
+              "crop": "finger-millet",
+              "sowMonth": 6
+            },
+            {
+              "crop": "black-gram",
+              "sowMonth": 10
+            }
+          ]
+        },
+        {
+          "id": "sorghum-sesame",
+          "name": "Sorghum, then sesame",
+          "crops": [
+            {
+              "crop": "sorghum",
+              "sowMonth": 6
+            },
+            {
+              "crop": "sesame",
+              "sowMonth": 2
+            }
+          ]
+        },
+        {
+          "id": "pearlmillet-sorghum",
+          "name": "Pearl millet, then sorghum",
+          "crops": [
+            {
+              "crop": "pearl-millet",
+              "sowMonth": 6
+            },
+            {
+              "crop": "sorghum",
+              "sowMonth": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "soil-cover",
+      "label": "Soil-cover rotation",
+      "purpose": "Fills fallow windows with a short cover crop or green manure to cut bare-field time and erosion.",
+      "candidates": [
+        {
+          "id": "sunnhemp-maize-cowpea",
+          "name": "Sunn hemp, maize, then cowpea",
+          "crops": [
+            {
+              "crop": "sunn-hemp",
+              "sowMonth": 5
+            },
+            {
+              "crop": "maize",
+              "sowMonth": 7
+            },
+            {
+              "crop": "cowpea",
+              "sowMonth": 11
+            }
+          ]
+        },
+        {
+          "id": "cowpea-cotton",
+          "name": "Cowpea cover, then cotton",
+          "crops": [
+            {
+              "crop": "cowpea",
+              "sowMonth": 5
+            },
+            {
+              "crop": "cotton",
+              "sowMonth": 8
+            }
+          ]
+        },
+        {
+          "id": "sorghum-cowpea",
+          "name": "Sorghum, then cowpea cover",
+          "crops": [
+            {
+              "crop": "sorghum",
+              "sowMonth": 6
+            },
+            {
+              "crop": "cowpea",
+              "sowMonth": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
