@@ -3,19 +3,20 @@
 
 export const POWER_BASE = 'https://power.larc.nasa.gov/api/temporal/daily/point'
 export const CORE_PARAMS = ['T2M', 'T2M_MAX', 'T2M_MIN', 'PRECTOTCORR', 'RH2M', 'ALLSKY_SFC_SW_DWN']
-export const OPTIONAL_PARAMS = ['GWETTOP', 'GWETROOT', 'EVPTRNS']
+export const OPTIONAL_PARAMS = ['GWETTOP', 'GWETROOT', 'EVPTRNS', 'IMERG_PRECTOT']
 export const FILL_VALUE = -999
 
 const FIELD_MAP = {
   T2M: 't2m',
   T2M_MAX: 'tmax',
   T2M_MIN: 'tmin',
-  PRECTOTCORR: 'rain',
+  PRECTOTCORR: 'rainPower',
   RH2M: 'rh',
   ALLSKY_SFC_SW_DWN: 'rad',
   GWETTOP: 'gwettop',
   GWETROOT: 'gwetroot',
   EVPTRNS: 'evptrns',
+  IMERG_PRECTOT: 'gpmRain',
 }
 
 export function buildUrl({ lat, lon, startYear, endYear, params = [...CORE_PARAMS, ...OPTIONAL_PARAMS] }) {
@@ -27,6 +28,10 @@ export function buildUrl({ lat, lon, startYear, endYear, params = [...CORE_PARAM
     start: `${startYear}0101`,
     end: `${endYear}1231`,
     format: 'JSON',
+    // IMERG is only served in UTC. High resolution selects the SMAP source for
+    // matching soil-moisture parameters (POWER falls back outside its domain).
+    'time-standard': 'UTC',
+    'high-resolution': 'true',
   })
   return `${POWER_BASE}?${q.toString()}`
 }
@@ -63,6 +68,12 @@ export function parsePowerResponse(json) {
       rec[FIELD_MAP[n]] = ok ? v : null
       if (ok) stats[n].valid += 1
     })
+    // GPM IMERG (~10 km) drives rainfall analysis where available. Keep the
+    // coarser POWER precipitation as a per-day fallback for any masked gaps.
+    rec.rain = rec.gpmRain ?? rec.rainPower ?? null
+    // In high-resolution mode POWER substitutes SMAP L4 root-zone wetness
+    // after 2015; the earlier portion is not SMAP and is excluded downstream.
+    rec.smapRootZone = rec.year >= 2015 ? (rec.gwetroot ?? null) : null
     return rec
   })
 
@@ -84,17 +95,30 @@ export function parsePowerResponse(json) {
       paramCompleteness: Object.fromEntries(
         names.map((n) => [n, stats[n].total ? stats[n].valid / stats[n].total : 0]),
       ),
+      gpmCoverage: stats.IMERG_PRECTOT?.total ? stats.IMERG_PRECTOT.valid / stats.IMERG_PRECTOT.total : 0,
+      smapCoverage: days.some((d) => d.year >= 2015) ? days.filter((d) => d.year >= 2015 && d.smapRootZone != null).length / days.filter((d) => d.year >= 2015).length : 0,
       completeness: totalCore ? validCore / totalCore : 0,
       elevation: json?.geometry?.coordinates?.[2] ?? null,
     },
   }
 }
 
+function applySmapCoverage(parsed, lat) {
+  if (Math.abs(Number(lat)) > 84.66) {
+    // Outside SMAP L4's latitude range, POWER may return a fallback wetness
+    // source. Do not present it as SMAP evidence or use it in the score.
+    parsed.days.forEach((day) => { day.smapRootZone = null })
+    parsed.meta.smapCoverage = 0
+  }
+  return parsed
+}
+
 const memoryCache = new Map()
-const LS_PREFIX = 'powerCache:v1:'
+const LS_PREFIX = 'powerCache:v3:'
 
 function cacheKey(o) {
-  return `${Number(o.lat).toFixed(2)},${Number(o.lon).toFixed(2)},${o.startYear}-${o.endYear}`
+  const smapDomain = Math.abs(Number(o.lat)) <= 84.66 ? 'smap-domain' : 'outside-smap-domain'
+  return `${Number(o.lat).toFixed(2)},${Number(o.lon).toFixed(2)},${o.startYear}-${o.endYear}:${smapDomain}`
 }
 
 function readLocal(key) {
@@ -138,7 +162,7 @@ export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchIm
 
   const local = readLocal(key)
   if (local) {
-    const parsed = parsePowerResponse(local.json)
+    const parsed = applySmapCoverage(parsePowerResponse(local.json), opts.lat)
     parsed.meta = { ...parsed.meta, origin: 'browser-cache', fetchedAt: local.fetchedAt, lat: opts.lat, lon: opts.lon }
     memoryCache.set(key, parsed)
     return parsed
@@ -150,11 +174,12 @@ export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchIm
     try {
       const json = await fetchJson(url, { timeoutMs, fetchImpl })
       const parsed = parsePowerResponse(json)
+      const inCoverage = applySmapCoverage(parsed, opts.lat)
       const fetchedAt = new Date().toISOString()
-      parsed.meta = { ...parsed.meta, origin: 'live', fetchedAt, lat: opts.lat, lon: opts.lon }
-      memoryCache.set(key, parsed)
+      inCoverage.meta = { ...inCoverage.meta, origin: 'live', fetchedAt, lat: opts.lat, lon: opts.lon }
+      memoryCache.set(key, inCoverage)
       writeLocal(key, { json, fetchedAt })
-      return parsed
+      return inCoverage
     } catch (e) {
       lastErr = e
       if (attempt < retries) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))

@@ -22,7 +22,7 @@ Choose the prepared rural location. Select a common rotation, then show that bot
 Open Recommendations. Point out the baseline and available strategy cards, priority-sensitive scores and confidence labels. There can be fewer than three alternatives if no candidate passes the climate screen at that location. Open a card and show the “why” section, seasonal NASA evidence and the bare/crop month timeline. Say: “The score is a transparent screening aid, not a yield forecast. Generic crop parameters and local conditions still need agronomist review.”
 
 **2:10–2:35 — Context and uncertainty**  
-Show a GPM, SMAP or GRACE map in Data used. Explain that NASA GIBS images are public regional context only and their colors do not enter the score; GRACE shows total water-storage change, not a single well. Point to a data gap or risk note. Open “Add your soil test and local price” to show how farmers can save lab results and buyer quotes. State that they remain local context and are not score inputs. If available, show the local crop panel and state that article mentions are text clues, not crop production statistics.
+Show the NASA water panel in the main results area. Point out the GPM daily rainfall coverage and the SMAP root-zone wetness indicator, explaining that GPM rainfall and available SMAP values feed the water comparison. The GPM, SMAP and GRACE/GRACE-FO images are regional map context only; their colors never enter the score, and GRACE is not a single-well measurement. Point to a data gap or risk note. Open “Add your soil test and local price” to show how farmers can save lab results and buyer quotes. State that they remain local context and are not score inputs. If available, show the local crop panel and state that article mentions are text clues, not crop production statistics.
 
 **2:35–2:50 — What-if**  
 Move one rainfall or temperature slider. “This stress-tests the historical record by shifting it uniformly. It is not a future climate projection. The point is to reveal whether the ranking is sensitive to the assumptions.” Reset the control.
@@ -48,8 +48,8 @@ It is a relative screening score under the entered context and chosen priorities
 **How is farmer knowledge included?**  
 Farmers enter their current rotation, soil and water context, and set priorities. They can also save lab soil-test values and a local price quote in the browser. Those entries are not score inputs yet. The tool highlights unknowns and review points so local knowledge can validate or reject an option.
 
-**Are GPM, SMAP and GRACE used in the scores?**  
-No. Their public NASA GIBS layers appear as map context. FieldShift does not sample their colors as numeric values. NASA POWER and supported MODIS/soil context feed the current scoring path.
+**Are the NASA water layers used in the scores?**
+Numeric GPM IMERG rainfall and available SMAP L4 root-zone wetness from NASA POWER feed the water comparison. NASA GIBS images appear as regional map context, and FieldShift never samples map colors. GRACE remains context because it cannot resolve a particular field or well.
 
 **What is the next step toward real-world impact?**  
 Pilot in one region with farmers and extension/agronomy partners; validate crop calendars and parameters against local knowledge, station records and soil tests; then revise and document the rules before expanding.

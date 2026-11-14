@@ -11,11 +11,11 @@ export const GLOSSARY = {
   },
   soilWetness: {
     term: 'Soil wetness',
-    text: 'How wet the soil usually is, from 0 (dry) to 1 (wet). Here it is a NASA model value, not a measurement from your field.',
+    text: 'How wet the root zone usually is, from 0 (dry) to 1 (wet). Where available, this uses high-resolution NASA POWER SMAP L4 data from 2015 onward. It is model-assisted satellite data, not a measurement from your field.',
   },
   soilMoistureAnomaly: {
     term: 'Soil moisture anomaly',
-    text: 'How much wetter or drier the soil is than usual for that time of year. NASA SMAP map context is now available, but its pixels are not turned into field-level point values or used in the rotation score.',
+    text: 'How much wetter or drier the soil is than usual for that time of year. SMAP root-zone wetness can add a small drought-risk adjustment; the separate map imagery is regional context and its colors are never used as field-level values.',
   },
   ndvi: {
     term: 'NDVI',

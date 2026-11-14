@@ -76,11 +76,22 @@ function FarmerEvidence({ lat, lon, baselineCrops }) {
   )
 }
 
-function WaterMapContext({ lat, lon }) {
+export function WaterMapContext({ lat, lon, power }) {
+  const gpmDays = power.days.filter((day) => day.gpmRain != null)
+  const smapDays = power.days.filter((day) => day.smapRootZone != null)
+  const meanSmapWetness = smapDays.length ? smapDays.reduce((total, day) => total + day.smapRootZone, 0) / smapDays.length : null
+  const gpmPct = Math.round((power.meta.gpmCoverage ?? 0) * 100)
   return (
-    <details className="panel water-context">
-      <summary>See rainfall, soil moisture and water-storage maps</summary>
-      <p className="hint">Public NASA GIBS map imagery, centered on your point. These are visual regional context layers; FieldShift does not read a pixel value or treat them as field measurements.</p>
+    <section className="panel water-context" aria-labelledby="water-context-title">
+      <p className="eyebrow">NASA water observations</p>
+      <h2 id="water-context-title">GPM, SMAP and GRACE / GRACE-FO (Map context)</h2>
+      <p>Latest public NASA map layers are available below. Raster imagery gives regional context; this app does not infer field-level point measurements from map colors.</p>
+      <div className="water-metrics" aria-label="NASA water data used in the comparison">
+        <article><strong>GPM IMERG rainfall</strong><span>{gpmPct}% of analyzed days available</span><small>Used in rainfall history, crop water balance and heavy-rain timing; POWER precipitation fills missing GPM days.</small></article>
+        <article><strong>SMAP root-zone wetness</strong><span>{meanSmapWetness == null ? 'No point values available' : `${meanSmapWetness.toFixed(2)} / 1 average`}</span><small>{smapDays.length ? `Daily NASA POWER high-resolution values since 2015 (${smapDays.length.toLocaleString()} records). It can add a small drought-risk adjustment.` : 'No SMAP point values were returned, so no SMAP adjustment is applied.'}</small></article>
+        <article><strong>GRACE / GRACE-FO storage</strong><span>Regional context only</span><small>Its footprint is too broad for a field rotation score. It is not interpreted as well depth or local groundwater availability.</small></article>
+      </div>
+      <p className="hint">How the decision changes: GPM rainfall informs the water and erosion evidence. Low SMAP root-zone wetness can reduce the water-fit score for drought-sensitive crops by up to 8 points. The trigger is generic, and the maps below do not set that score.</p>
       <div className="water-map-grid">
         {WATER_LAYERS.map((layer) => {
           const src = gibsMapUrl(layer.id, lat, lon)
@@ -88,7 +99,7 @@ function WaterMapContext({ lat, lon }) {
         })}
       </div>
       <p className="hint"><a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">Explore more layers in NASA Worldview</a></p>
-    </details>
+    </section>
   )
 }
 
@@ -145,15 +156,16 @@ export default function DataStatus({ ctx, power, soil, sat, local, calendar, far
         ) : (
           <Row state="off" name="Global crop calendar (AgMIP-GGCMI)" detail={calendar?.error ?? 'Not available; sowing months fall back to climate-based estimates.'} />
         )}
+        <Row state={power.meta.gpmCoverage > 0 ? 'ok' : 'off'} name="Rainfall decisions (GPM IMERG)" detail={power.meta.gpmCoverage > 0 ? `Used for ${Math.round(power.meta.gpmCoverage * 100)}% of analyzed daily rainfall values, about 10 km; NASA POWER precipitation fills remaining days.` : 'Unavailable at this point/date; rainfall falls back to NASA POWER.'} />
+        <Row state={power.meta.smapCoverage > 0 ? 'ok' : 'off'} name="Root-zone moisture risk (SMAP via NASA POWER)" detail={power.meta.smapCoverage > 0 ? `High-resolution values from 2015 onward, about 9 km; used as a small drought-risk adjustment. Model-assisted satellite estimate, not a soil probe.` : 'No usable SMAP values returned; no SMAP adjustment is applied.'} />
         {layer('ndvi', 'Greenness (MODIS NDVI)', s?.ndvi ? `${s.ndvi.years.join(' and ')}, 250 m, 16-day` : '', 'MODIS, 250 m')}
         {layer('et', 'Water use (MODIS evapotranspiration)', s?.et ? `${s.et.years.join(', ')}, 500 m, 8-day. Cross-check: ${s.agreement ? (s.agreement.agrees ? 'agrees with POWER' : 'disagrees with POWER') : 'not enough months'}` : '', 'MODIS, 500 m')}
         {layer('lst', 'Ground temperature (MODIS)', s?.lst ? `${s.lst.years.join(', ')}, 1 km, 8-day` : '', 'MODIS, 1 km')}
         {s?.landCover ? <Row state="ok" name="Farmland check (MODIS land cover)" detail={`${s.landCover.name}, 500 m`} /> : loading ? <Row state="loading" name="Farmland check (MODIS land cover)" detail="Loading." /> : <Row state="off" name="Farmland check (MODIS land cover)" detail="Not loaded." />}
         {s?.slope ? <Row state="ok" name="Slope (Copernicus DEM, ESA)" detail={`${s.slope.slopePct.toFixed(1)}%, ${s.slope.classLabel}, about 90 m`} /> : loading ? <Row state="loading" name="Slope (Copernicus DEM, ESA)" detail="Loading." /> : <Row state="off" name="Slope (Copernicus DEM, ESA)" detail="Not loaded." />}
-        <Row state="context" name="GPM, SMAP and GRACE / GRACE-FO" detail="Latest public NASA map layers are available below. Raster imagery gives regional context; this app does not infer field-level point measurements from map colors." />
+        <Row state="context" name="GRACE / GRACE-FO" detail="Regional map context only; not used as a field-level well or groundwater measurement." />
       </ul>
       {errs.bundle && <p className="hint" role="status">Optional satellite bundle unavailable: {errs.bundle}</p>}
-      <WaterMapContext lat={power.meta.lat} lon={power.meta.lon} />
       <FarmerEvidence key={`${Number(power.meta.lat).toFixed(2)},${Number(power.meta.lon).toFixed(2)}`} lat={power.meta.lat} lon={power.meta.lon} baselineCrops={farm.baselineCrops.map((entry) => entry.crop)} />
     </div>
   )

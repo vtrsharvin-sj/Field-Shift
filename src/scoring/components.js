@@ -29,8 +29,12 @@ export function waterScore(items, seasons, farm, w, soil, totalDays = null) {
     const tolFactor = w.water.toleranceBase - w.water.tolerancePerPoint * it.crop.droughtTolerance
     const shortfallPenalty = clamp(100 * (w.water.meanShare * ratioMean + w.water.dryYearShare * ratioDry) * tolFactor)
     const varPenalty = it.crop.droughtTolerance <= 2 ? clamp((s.rainCV ?? 0) - w.water.variabilityCvPct, 0, 100) * w.water.variabilityPenaltyPerPct : 0
-    const fit = clamp(100 - shortfallPenalty - Math.min(varPenalty, w.water.variabilityPenaltyMax))
-    return { crop: it.crop.name, demand, effRain, dryRain, allowance, fit, irrigationNeed: Math.max(0, demand - effRain), ratioMean, ratioDry, rainCV: s.rainCV }
+    const smapWetness = s.soilWetnessMean
+    const smapDryness = smapWetness == null ? null : clamp((w.water.smapDryWetnessThreshold - smapWetness) / w.water.smapDryWetnessThreshold, 0, 1)
+    const smapSensitivity = clamp((5 - it.crop.droughtTolerance) / 4, 0, 1)
+    const smapPenalty = smapDryness == null ? 0 : smapDryness * smapSensitivity * w.water.smapDryPenaltyMax
+    const fit = clamp(100 - shortfallPenalty - Math.min(varPenalty, w.water.variabilityPenaltyMax) - smapPenalty)
+    return { crop: it.crop.name, demand, effRain, dryRain, allowance, fit, irrigationNeed: Math.max(0, demand - effRain), ratioMean, ratioDry, rainCV: s.rainCV, smapWetness, smapPenalty }
   })
   const fit = weightedMean(rows.map((r) => r.fit), items.map((it) => it.durationDays))
   const irrigationNeed = sum(rows.map((r) => r.irrigationNeed))
@@ -42,7 +46,7 @@ export function waterScore(items, seasons, farm, w, soil, totalDays = null) {
     fit,
     frugality,
     irrigationNeed,
-    formula: `Water score = ${w.water.fitShare} x water fit + ${w.water.frugalityShare} x water saving. Water fit compares crop water demand (Kc x ET0 + extra water) with usable rain plus the water-source allowance, in an average year (${w.water.meanShare}) and a dry year (${w.water.dryYearShare}), scaled by drought tolerance. Water saving = 100 - irrigation needed / ${w.water.irrigationScaleMm} mm.`,
+    formula: `Water score = ${w.water.fitShare} x water fit + ${w.water.frugalityShare} x water saving. Water fit compares crop water demand (Kc x ET0 + extra water) with usable GPM IMERG rainfall (POWER precipitation fallback where GPM is missing) plus the water-source allowance, in an average year (${w.water.meanShare}) and a dry year (${w.water.dryYearShare}), scaled by drought tolerance. Where recent SMAP root-zone wetness is available, a low seasonal wetness signal adds up to ${w.water.smapDryPenaltyMax} points of risk for a drought-sensitive crop; the generic wetness trigger is ${w.water.smapDryWetnessThreshold} and is not a crop-specific critical limit. Water saving = 100 - irrigation needed / ${w.water.irrigationScaleMm} mm.`,
   }
 }
 

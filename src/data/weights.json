@@ -34,7 +34,9 @@
     "variabilityCvPct": 25,
     "variabilityPenaltyPerPct": 0.3,
     "variabilityPenaltyMax": 15,
-    "dryYearCvFactor": 0.84
+    "dryYearCvFactor": 0.84,
+    "smapDryWetnessThreshold": 0.35,
+    "smapDryPenaltyMax": 8
   },
   "heat": {
     "toleratedHeatShare": 0.05,

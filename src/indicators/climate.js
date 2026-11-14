@@ -91,7 +91,11 @@ export function seasonYearStats(recs, { lat, kc = 1, heatThresholdC, frostThresh
     .filter((v) => v != null)
   const rainTotal = sum(rainDays.map((r) => r.rain))
   const et0Total = sum(et0Days)
-  const soil = valid('gwetroot').map((r) => r.gwetroot)
+  // The API request enables POWER high-resolution mode, which provides SMAP
+  // root-zone wetness from 2015 onward. Earlier MERRA-2 values are excluded.
+  const soil = recs
+    .filter((r) => r.year >= 2015 && (r.smapRootZone ?? r.gwetroot) != null)
+    .map((r) => r.smapRootZone ?? r.gwetroot)
   return {
     rainTotal,
     rainValidDays: rainDays.length,
@@ -141,6 +145,7 @@ export function seasonIndicators(days, index, { lat, sowMonth, durationDays, kc 
     waterBalanceMean: mean(balances),
     waterBalanceDryYear: percentile(balances, 20), // a "dry year": 1 year in 5 is worse than this
     soilWetnessMean: col('soilWetness').length ? mean(col('soilWetness')) : null,
+    soilWetnessYears: perYear.filter((p) => p.soilWetness != null).map((p) => p.year),
     rhMean: mean(col('meanRh')),
     tmeanMean: mean(col('meanT')),
     sowTempMean: mean(col('sowT')),

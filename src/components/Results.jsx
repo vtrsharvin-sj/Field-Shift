@@ -6,7 +6,7 @@ import RotationCards from './RotationCards.jsx'
 import ClimateSnapshot from './ClimateSnapshot.jsx'
 import SatelliteSection from './SatelliteSection.jsx'
 import About from './About.jsx'
-import DataStatus from './DataStatus.jsx'
+import DataStatus, { WaterMapContext } from './DataStatus.jsx'
 import LocalCrops from './LocalCrops.jsx'
 import { FarmForm, Priorities } from './FarmForm.jsx'
 
@@ -105,6 +105,7 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
           </p>
         )}
         <Summary result={result} />
+        <WaterMapContext lat={power.meta.lat} lon={power.meta.lon} power={power} />
         {ctx.satellite?.landCover && !ctx.satellite.landCover.isCropland && (
           <aside className="location-alert" role="note" aria-label="Location data check">
             <strong>Check this point before using the comparison.</strong>

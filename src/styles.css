@@ -220,6 +220,7 @@ dd { margin-left: 0; color: var(--muted); }
   .stepper .lab { display: none; }
   .stepper li.current .lab { display: inline; }
   .card-plain { padding: 1rem; }
+  .water-metrics { grid-template-columns: 1fr; }
 }
 @media print {
   .appbar, .side, .tabs, .nav, .print-row, .more, button { display: none !important; }
@@ -259,6 +260,12 @@ dd { margin-left: 0; color: var(--muted); }
 .water-map-card p { margin: .4rem 0; font-size: .86rem; }
 .water-map-card small { color: var(--muted); }
 .water-image-error { padding: .65rem; border-radius: 8px; background: #fff4e5; color: #744210; }
+.water-context h2 { margin: .2rem 0 .55rem; font-size: 1.35rem; }
+.water-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: .85rem 0; }
+.water-metrics article { display: flex; flex-direction: column; gap: .35rem; min-width: 0; padding: .7rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfdfc; }
+.water-metrics article strong { font-size: .94rem; }
+.water-metrics article span { color: var(--green-900); font-size: 1.1rem; font-weight: 800; }
+.water-metrics article small { color: var(--muted); line-height: 1.45; }
 .soiltable { width: 100%; border-collapse: collapse; margin: .5rem 0 1rem; font-size: .95rem; }
 .soiltable caption { text-align: left; font-weight: 700; padding-bottom: .3rem; font-size: .9rem; color: var(--muted); }
 .soiltable th, .soiltable td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }

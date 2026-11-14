@@ -28,7 +28,7 @@ export function powerSourceLabel(meta) {
         ? 'fetched live'
         : `from browser cache (fetched ${String(meta.fetchedAt ?? '').slice(0, 10)})`
   const where = meta.lat != null && meta.lon != null ? ` at ${Number(meta.lat).toFixed(2)}, ${Number(meta.lon).toFixed(2)}` : ''
-  return `NASA POWER${where}, about 50 km grid cell (not a field measurement), ${span}, ${origin}`
+  return `NASA POWER${where}, GPM IMERG precipitation at about 10 km where available (POWER fallback otherwise), climate variables at their source grids, ${span}, ${origin}`
 }
 
 /** Months (1-12) formatted as a readable list. */
@@ -58,13 +58,13 @@ function globalGaps(ctx, soilInfo) {
   if (sat?.lst) gaps.push(`Ground temperature (MODIS, 1 km) covers ${sat.lst.years.join(', ')} only and is a mixed pixel, not your field. The hot-ground threshold (${ctx.weights.satellite.lstHotC} C) is a generic estimate.`)
   else gaps.push(`Ground temperature (MODIS land surface temperature) was not loaded${err.lst ? ` (${err.lst})` : ''}.`)
   if (!sat?.landCover) gaps.push(`Cropland check (MODIS land cover) was not loaded${err.landCover ? ` (${err.landCover})` : ''}.`)
-  gaps.push('NASA GPM IMERG, SMAP and GRACE/GRACE-FO map imagery is available in Data used as public regional context. The displayed map colors are not sampled into numeric point readings or used in rotation scores; GRACE measures total water-storage change, not an individual well.')
+  gaps.push(`GPM IMERG point precipitation values inform rainfall, water-balance and heavy-rain calculations where present (${Math.round((ctx.power.meta.gpmCoverage ?? 0) * 100)}% of analyzed days); POWER precipitation fills gaps. SMAP root-zone wetness from NASA POWER high-resolution mode informs a small drought-risk adjustment when available (${Math.round((ctx.power.meta.smapCoverage ?? 0) * 100)}% of post-2015 days). The GPM, SMAP and GRACE / GRACE-FO map colors remain regional context and are never sampled as field measurements. GRACE is broad total-water-storage change, not an individual well.`)
   gaps.push('Market prices and lab soil-test values can be recorded in Data used for this location, but remain farmer-entered context and do not alter the screening scores or turn them into a profit forecast.')
   if (sat?.agreement && !sat.agreement.agrees) gaps.push(`MODIS potential ET and the POWER-based ET0 disagree (${sat.agreement.pctDiff.toFixed(0)}% difference, correlation ${sat.agreement.r?.toFixed(2)}). Water results are less certain.`)
   const m = ctx.power.meta
   if (m.missingParams.length) gaps.push(`NASA POWER did not provide: ${m.missingParams.join(', ')}. Indicators that need them were left out.`)
   if (m.completeness < 1) gaps.push(`${Math.round((1 - m.completeness) * 1000) / 10}% of daily NASA POWER values were missing (-999) and were excluded.`)
-  gaps.push('NASA POWER is a model and satellite blend at about 50 km. Local rain can differ a lot from the grid-cell value, especially near hills. Compare with a local rain record before relying on the water results.')
+  gaps.push('GPM IMERG is roughly 10 km and the POWER fallback climate grid is coarser; neither represents a rain gauge on this field. Local rainfall can differ, especially near hills, so compare with farm or nearby station records before relying on water results.')
   return gaps
 }
 
@@ -94,7 +94,11 @@ function evidenceFor(ev, ctx) {
       lines.push({ text: `${name}: ${LEVEL_TEXT[lc.level]}.${sn ? ` "${sn.text}"` : ''}`, source: sn ? `${sn.page} (Wikipedia, CC BY-SA)` : 'Wikipedia articles about your area (CC BY-SA)' })
     }
     lines.push({ text: `${name}: average temperature in this season is ${s.tmeanMean.toFixed(1)} C on growing days (coldest year ${s.tmeanMin.toFixed(1)}, warmest ${s.tmeanMax.toFixed(1)}). The crop's comfortable range is ${it.crop.tempRangeC.optMin} to ${it.crop.tempRangeC.optMax} C.`, source: `${src}; ranges in crops.json` })
-    if (s.soilWetnessMean != null) lines.push({ text: `${name}: root-zone soil wetness is usually ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale.`, source: `${src}, GWETROOT (modelled, not measured)` })
+    if (s.soilWetnessMean != null) {
+      const years = s.soilWetnessYears?.length ? `${s.soilWetnessYears[0]}–${s.soilWetnessYears.at(-1)}` : '2015 onward'
+      lines.push({ text: `${name}: mean SMAP root-zone wetness during this crop window is ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale; the water-fit score applies a modest drought-risk adjustment when this is low.`, source: `NASA POWER high-resolution SMAP L4, approximately 9 km, ${years}; model-assisted satellite estimate, not a field probe` })
+    }
+    if (row.smapPenalty > 0) lines.push({ text: `${name}: recent SMAP root-zone wetness adds ${row.smapPenalty.toFixed(1)} points of drought risk to this crop's water-fit component, scaled by its drought tolerance.`, source: `Generic wetness trigger ${ctx.weights.water.smapDryWetnessThreshold}; verify with a soil probe and local advice` })
   })
   const e = ev.components.erosion
   const si = ctx.soilInfo
@@ -129,6 +133,7 @@ function risksFor(ev, ctx, baselineEv) {
     const row = ev.components.water.rows[i]
     const s = ev.seasons[i]
     if (row.ratioDry > 0.15) out.push(`${it.crop.name}: in a dry year (about 1 year in 5) usable rain plus your water source covers roughly ${r0(100 * (1 - row.ratioDry))}% of what the crop needs.`)
+    if (row.smapPenalty > 0) out.push(`${it.crop.name}: recent SMAP root-zone wetness is low for this generic screen and adds ${row.smapPenalty.toFixed(1)} drought-risk points. Confirm with a soil test or probe; this is not a field moisture reading.`)
     if (s.heatDaysMean / it.durationDays > w.heat.toleratedHeatShare) out.push(`${it.crop.name}: about ${s.heatDaysMean.toFixed(1)} very hot days per season. Check heat-sensitive stages such as flowering with a local expert.`)
     if (s.frostDaysMean > 0) out.push(`${it.crop.name}: frost nights are possible (${s.frostDaysMean.toFixed(1)} per season).`)
     const cf = ev.components.climate.rows[i]
@@ -220,6 +225,11 @@ function confidenceFor(ev, cards, ctx, unknownCount) {
   const years = ctx.trends?.rows?.length ?? Math.max(0, m.endYear - m.startYear + 1)
   if (m.completeness < w.minCompleteness) { issues += 1; reasons.push(`Only ${Math.round(m.completeness * 100)}% of daily NASA values were usable.`) }
   else reasons.push(`${Math.round(m.completeness * 1000) / 10}% of daily NASA values were usable.`)
+  const gpmCoverage = m.gpmCoverage ?? 0
+  if (gpmCoverage >= 0.8) reasons.push(`GPM IMERG supplied ${Math.round(gpmCoverage * 100)}% of analyzed rainfall days; POWER precipitation filled the remaining gaps.`)
+  else { issues += 1; reasons.push(`GPM IMERG coverage was ${Math.round(gpmCoverage * 100)}% of analyzed days, so more rainfall values came from the coarser POWER fallback.`) }
+  if ((m.smapCoverage ?? 0) > 0) reasons.push(`SMAP root-zone wetness was available for ${Math.round(m.smapCoverage * 100)}% of post-2015 dates and only adds a bounded drought-risk adjustment.`)
+  else { issues += 1; reasons.push('No SMAP root-zone values were available at this point, so the SMAP drought-risk adjustment was not applied.') }
   if (years < w.goodYears) { issues += 1; reasons.push(`The climate record is ${years} years, short for judging year-to-year variation.`) }
   else reasons.push(`The climate record covers ${years} years.`)
   const others = cards.filter((c) => c !== ev).map((c) => c.overall)
