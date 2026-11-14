@@ -102,8 +102,8 @@ describe('landmark search sources', () => {
     expect(relevantTo('Golden Temple', 'Operation Blue Star')).toBe(false)
     expect(relevantTo('Eiffel', 'Eiffel Tower')).toBe(true)
   })
-  it('gives quick suggestions only after 3 letters', async () => {
-    expect(await suggestPlaces('br')).toEqual([])
+  it('gives quick suggestions only after 2 letters', async () => {
+    expect(await suggestPlaces('b')).toEqual([])
     const fetchImpl = async () => ({ ok: true, json: async () => ({ features: [{ geometry: { coordinates: [1, 2] }, properties: { name: 'Bro Cafe', city: 'X' } }] }) })
     expect((await suggestPlaces('bro', { fetchImpl }))[0].name).toBe('Bro Cafe, X')
   })

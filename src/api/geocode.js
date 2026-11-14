@@ -157,10 +157,10 @@ export async function searchPlaces(query, opts = {}) {
 }
 
 /** Quick suggestions while typing: Photon only (built for it). */
-export async function suggestPlaces(query, opts = {}) {
+export async function suggestPlaces(query, { minLength = 2, ...opts } = {}) {
   const q = String(query ?? '').trim()
-  if (q.length < 3) return []
-  return mergePlaces([await searchPhoton(q, { limit: 6, ...opts })], 6)
+  if (q.length < minLength) return []
+  return mergePlaces([await searchPhoton(q, { limit: 7, ...opts })], 7)
 }
 
 // ---- Pasted coordinates and links

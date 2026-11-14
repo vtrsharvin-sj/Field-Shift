@@ -50,7 +50,7 @@ button.ghost { background: transparent; border-color: transparent; color: var(--
 button.small { min-height: 38px; padding: .3rem .8rem; font-size: .92rem; }
 button.link { border: 0; background: none; padding: .2rem 0; min-height: 0; color: var(--blue-700); text-decoration: underline; text-align: left; font-weight: 500; }
 .grid3 { align-items: end; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin: .75rem 0; }
-.searchrow { display: grid; grid-template-columns: 1fr auto auto; gap: .6rem; align-items: end; margin-bottom: .5rem; }
+.searchrow { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: end; margin-bottom: .5rem; }
 .block { max-width: 36rem; }
 .places { list-style: none; padding: 0; margin: .25rem 0 .75rem; border: 1px solid var(--line); border-radius: 10px; }
 .places li { padding: .4rem .8rem; border-bottom: 1px solid var(--line); }
@@ -263,3 +263,25 @@ dd { margin-left: 0; color: var(--muted); }
 .places li .link:hover span:last-child { text-decoration: underline; }
 .pnum { flex: none; width: 1.5rem; height: 1.5rem; display: inline-grid; place-items: center; border-radius: 50%; background: var(--blue-100); color: var(--blue-700); font-weight: 800; font-size: .8rem; }
 .places small { text-align: right; max-width: 12rem; }
+
+/* typeahead search box */
+.combo { position: relative; min-width: 0; }
+.combo > label { display: block; font-weight: 600; margin-bottom: .3rem; }
+.combo-field { position: relative; display: flex; align-items: center; }
+.combo-field input { padding-left: 2.5rem; padding-right: 2.6rem; border-radius: 99px; min-height: 50px; box-shadow: 0 1px 3px rgba(16, 24, 40, .12); }
+.combo-icon { position: absolute; left: .9rem; color: var(--muted); display: inline-flex; pointer-events: none; }
+.combo-spin { position: absolute; right: .9rem; }
+.combo-clear { position: absolute; right: .35rem; width: 38px; height: 38px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; font-size: 1.4rem; line-height: 1; color: var(--muted); }
+.combo-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: .35rem 0; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 28px rgba(16, 24, 40, .18); max-height: 360px; overflow: auto; }
+.combo-opt { display: flex; align-items: center; gap: .75rem; padding: .55rem 1rem; cursor: pointer; }
+.combo-opt.on { background: var(--blue-100); }
+.combo-opt .pin { flex: none; width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; border-radius: 50%; background: #eef1f4; font-size: .9rem; }
+.combo-opt.locate .pin { background: var(--blue-100); color: var(--blue-700); font-weight: 800; }
+.combo-opt .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.combo-opt .main { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.combo-opt .main b { font-weight: 800; }
+.combo-opt .rest { font-size: .85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.combo-opt .kind { flex: none; font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; background: #eef1f4; color: var(--muted); }
+.combo-empty, .combo-foot { padding: .55rem 1rem; color: var(--muted); font-size: .88rem; }
+.combo-foot { border-top: 1px solid var(--line); }
+@media (max-width: 860px) { .searchrow { grid-template-columns: 1fr; } .combo-opt .kind { display: none; } }

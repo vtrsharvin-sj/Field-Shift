@@ -29,7 +29,7 @@ export function loadGoogleMaps(key) {
  * - Search results are drawn as numbered markers; clicking one chooses it.
  * Calls onFail(message) so the parent can fall back to another map.
  */
-export default function GoogleMapPicker({ lat, lon, valid, places = [], onPick, onPickPlace, onFail }) {
+export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = null, onPick, onPickPlace, onFail }) {
   const box = useRef(null)
   const map = useRef(null)
   const marker = useRef(null)
@@ -68,8 +68,9 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], onPick, 
     const pos = { lat, lng: lon }
     marker.current.setPosition(pos)
     map.current.panTo(pos)
-    if (map.current.getZoom() < 9) map.current.setZoom(11)
-  }, [ready, valid, lat, lon])
+    if (flyTo) map.current.setZoom(flyTo.zoom) // chosen from the search: show it close up
+    else if (map.current.getZoom() < 9) map.current.setZoom(11)
+  }, [ready, valid, lat, lon, flyTo])
 
   // Numbered markers for the search results, and fit the map to all of them.
   useEffect(() => {
