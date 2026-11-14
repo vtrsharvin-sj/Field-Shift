@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { googleEmbedUrl, googleMapsLink, parseCoordinates, parsePlaces } from './geocode.js'
+import { googleMapsLink, parseCoordinates, parsePlaces } from './geocode.js'
 
 describe('parseCoordinates', () => {
   it('reads plain pairs', () => {
@@ -25,10 +25,8 @@ describe('parseCoordinates', () => {
 })
 
 describe('links and places', () => {
-  it('builds Google Maps links without any key', () => {
+  it('builds a Google Maps link', () => {
     expect(googleMapsLink(10.95, 77.1)).toBe('https://www.google.com/maps?q=10.95,77.1')
-    expect(googleEmbedUrl(10.95, 77.1)).toContain('output=embed')
-    expect(googleEmbedUrl(10.95, 77.1)).not.toContain('key=')
   })
   it('parses place search results', () => {
     const p = parsePlaces({ results: [{ name: 'Ames', admin1: 'Iowa', country: 'United States', latitude: 42.03, longitude: -93.62 }] })

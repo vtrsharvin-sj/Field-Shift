@@ -22,6 +22,14 @@ npm test         # unit tests
 npm run build    # static site in dist/
 ```
 
+## Google Maps key
+
+The location step uses Google Maps when `VITE_GOOGLE_MAPS_API_KEY` is set, and falls back to OpenStreetMap when it is missing or rejected.
+
+- **Local:** the key is in `.env` (ignored by git). `.env.example` shows the format.
+- **GitHub Pages:** add a repository secret named `GOOGLE_MAPS_API_KEY` (Settings, Secrets and variables, Actions). The workflow passes it to the build.
+- **Important:** a browser key is visible to anyone who opens the site. In Google Cloud Console, enable only **Maps JavaScript API** for this key, and under Application restrictions choose **Websites (HTTP referrers)** and add `https://<user>.github.io/*` and `http://localhost:5173/*`. Set a daily quota cap too.
+
 ## Deploy to GitHub Pages
 
 1. Create a GitHub repository and push this project (`git remote add origin <url>`, `git push -u origin master`).

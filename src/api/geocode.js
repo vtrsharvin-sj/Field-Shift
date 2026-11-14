@@ -55,4 +55,3 @@ export function parseCoordinates(text) {
 }
 
 export const googleMapsLink = (lat, lon) => `https://www.google.com/maps?q=${lat},${lon}`
-export const googleEmbedUrl = (lat, lon, zoom = 13) => `https://maps.google.com/maps?q=${lat},${lon}&z=${zoom}&output=embed`

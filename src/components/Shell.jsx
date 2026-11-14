@@ -90,7 +90,7 @@ export function Footer() {
   return (
     <footer className="footer">
       <p><strong>{DISCLAIMER}</strong></p>
-      <p>Climate data: NASA POWER and MODIS (NASA). Soil: SoilGrids (ISRIC). Elevation: Copernicus DEM (ESA). Map: OpenStreetMap contributors. Scores are rule-based and shown in full on each card.</p>
+      <p>Climate data: NASA POWER and MODIS (NASA). Soil: SoilGrids (ISRIC). Elevation: Copernicus DEM (ESA). Maps: Google Maps (or OpenStreetMap contributors and Esri imagery when Google is off). Scores are rule-based and shown in full on each card.</p>
     </footer>
   )
 }

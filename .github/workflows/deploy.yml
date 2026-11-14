@@ -22,6 +22,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # Optional. Add a repository secret named GOOGLE_MAPS_API_KEY to use Google Maps. Without it the site uses OpenStreetMap.
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

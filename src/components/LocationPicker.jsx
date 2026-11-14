@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, LayersControl, useMapEvents, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { googleEmbedUrl, googleMapsLink, parseCoordinates, searchPlaces } from '../api/geocode.js'
+import { googleMapsLink, parseCoordinates, searchPlaces } from '../api/geocode.js'
+import GoogleMapPicker, { GOOGLE_KEY } from './GoogleMapPicker.jsx'
 import { DEMO_FARMS } from '../demo.js'
 
 function ClickHandler({ onPick }) {
@@ -25,7 +26,8 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
   const [places, setPlaces] = useState([])
   const [msg, setMsg] = useState('')
   const [paste, setPaste] = useState('')
-  const [showGoogle, setShowGoogle] = useState(false)
+  const [googleFailed, setGoogleFailed] = useState('')
+  const useGoogle = Boolean(GOOGLE_KEY) && !googleFailed
 
   function applyPaste(text) {
     setPaste(text)
@@ -82,20 +84,25 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
           ))}
         </ul>
       )}
+      {googleFailed && <p className="hint">Google Maps could not load ({googleFailed}). Showing the free OpenStreetMap map instead.</p>}
       <div className="map-wrap">
-        <MapContainer center={valid ? [lat, lon] : [20, 20]} zoom={valid ? 8 : 2} scrollWheelZoom={false} style={{ height: '320px', width: '100%' }}>
-          <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="Street map">
-              <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="Satellite">
-              <TileLayer attribution="Imagery &copy; Esri, Maxar, Earthstar Geographics" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-            </LayersControl.BaseLayer>
-          </LayersControl>
-          <ClickHandler onPick={(la, lo) => onChange({ lat: la, lon: lo })} />
-          <Recenter lat={lat} lon={lon} />
-          {valid && <CircleMarker center={[lat, lon]} radius={10} pathOptions={{ color: '#7a1f00', fillColor: '#ff6a2b', fillOpacity: 0.8 }} />}
-        </MapContainer>
+        {useGoogle ? (
+          <GoogleMapPicker lat={lat} lon={lon} valid={valid} onPick={(la, lo) => onChange({ lat: la, lon: lo })} onFail={setGoogleFailed} />
+        ) : (
+          <MapContainer center={valid ? [lat, lon] : [20, 20]} zoom={valid ? 8 : 2} scrollWheelZoom={false} style={{ height: '320px', width: '100%' }}>
+            <LayersControl position="topright">
+              <LayersControl.BaseLayer checked name="Street map">
+                <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              </LayersControl.BaseLayer>
+              <LayersControl.BaseLayer name="Satellite">
+                <TileLayer attribution="Imagery &copy; Esri, Maxar, Earthstar Geographics" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+              </LayersControl.BaseLayer>
+            </LayersControl>
+            <ClickHandler onPick={(la, lo) => onChange({ lat: la, lon: lo })} />
+            <Recenter lat={lat} lon={lon} />
+            {valid && <CircleMarker center={[lat, lon]} radius={10} pathOptions={{ color: '#7a1f00', fillColor: '#ff6a2b', fillOpacity: 0.8 }} />}
+          </MapContainer>
+        )}
       </div>
       <label className="block">
         Paste coordinates or a Google Maps link
@@ -122,18 +129,9 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
         </label>
       </div>
       {valid && (
-        <div className="gmaps">
+        <p className="gmaps">
           <a href={googleMapsLink(lat, lon)} target="_blank" rel="noreferrer">Open this point in Google Maps</a>
-          <button type="button" className="link" onClick={() => setShowGoogle(!showGoogle)} aria-expanded={showGoogle}>
-            {showGoogle ? 'Hide Google Maps preview' : 'Show Google Maps preview'}
-          </button>
-          {showGoogle && (
-            <iframe title="Google Maps preview of the chosen point" src={googleEmbedUrl(lat, lon)} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-          )}
-          {showGoogle && (
-            <p className="hint">If the preview stays blank, Google or your browser blocked it. Use the link above instead. The preview is Google's keyless embed and is not guaranteed to work.</p>
-          )}
-        </div>
+        </p>
       )}
     </section>
   )
