@@ -92,7 +92,7 @@ export default function LocationPicker({ farm, onChange }) {
     if (p) {
       onChange({ lat: p.lat, lon: p.lon })
       setMsg(`Location set to ${p.lat}, ${p.lon}.`)
-    } else if (text.trim()) setMsg('Could not read a location from that. Paste coordinates like 10.95, 77.1 or a full Google Maps link.')
+    } else if (text.trim()) setMsg('Could not read a location from that. Paste latitude and longitude, or a full Google Maps link.')
   }
 
   const list = places.length ? places : hints
@@ -103,7 +103,7 @@ export default function LocationPicker({ farm, onChange }) {
       <form className="searchrow" onSubmit={search} role="search">
         <label>
           Search by place or landmark name
-          <input type="search" value={query} autoComplete="off" placeholder="For example: Brookefields Mall, Marudhamalai temple, a village or a college" onChange={(e) => { setQuery(e.target.value); setPlaces([]) }} />
+          <input type="search" value={query} autoComplete="off" placeholder="Type a place or landmark name" onChange={(e) => { setQuery(e.target.value); setPlaces([]) }} />
         </label>
         <button type="submit" className="secondary" disabled={busy}>{busy ? 'Searching...' : 'Search'}</button>
         <button type="button" className="secondary" onClick={locate}>Use my location</button>
@@ -149,7 +149,7 @@ export default function LocationPicker({ farm, onChange }) {
       </div>
       <label className="block">
         Or paste coordinates or a Google Maps link
-        <input type="text" value={paste} placeholder="10.95, 77.1  or  https://www.google.com/maps/@10.95,77.1,15z" onChange={(e) => applyPaste(e.target.value)} />
+        <input type="text" value={paste} placeholder="Latitude, longitude or a Google Maps link" onChange={(e) => applyPaste(e.target.value)} />
       </label>
       <div className="grid3">
         <label>
@@ -169,3 +169,4 @@ export default function LocationPicker({ farm, onChange }) {
     </section>
   )
 }
+
