@@ -1,0 +1,32 @@
+import { GLOSSARY, DISCLAIMER } from '../data/glossary.js'
+
+export default function About() {
+  return (
+    <section aria-labelledby="about-h">
+      <h2 id="about-h">Glossary and about this tool</h2>
+      <h3>Words used in this tool</h3>
+      <dl>
+        {Object.values(GLOSSARY).map((g) => (
+          <div key={g.term}>
+            <dt>{g.term}</dt>
+            <dd>{g.text}</dd>
+          </div>
+        ))}
+      </dl>
+      <h3>Where the data comes from</h3>
+      <ul>
+        <li><strong>NASA POWER</strong> (live): daily temperature, rain, humidity, sunshine and modelled soil wetness, about 50 km grid, 2005 to 2024. It is a model and satellite blend, so local rain can differ, especially near hills.</li>
+        <li><strong>SoilGrids</strong> (ISRIC, not NASA, live): soil sand, clay and carbon. Used only to suggest a soil type.</li>
+        <li><strong>Crop table</strong>: starting estimates from the project brief for Tamil Nadu. Not yet checked against TNAU, ICAR or FAO.</li>
+        <li><strong>Not included</strong>: MODIS NDVI, SMAP soil moisture, GPM rainfall, SRTM slope, GRACE groundwater, soil tests, market prices.</li>
+      </ul>
+      <h3>Limits of the tool</h3>
+      <ul>
+        <li>It works at point and regional scale, not at field level.</li>
+        <li>It does not predict yield or profit.</li>
+        <li>Scores are rule-based. The rules and weights are listed in each card and in weights.json.</li>
+        <li>{DISCLAIMER}</li>
+      </ul>
+    </section>
+  )
+}

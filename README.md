@@ -1,0 +1,36 @@
+# Crop Rotation Helper
+
+Client-side tool that compares crop rotations for a farm using real NASA POWER climate data. No backend, no login.
+
+## Run
+
+```
+npm install
+npm run dev      # development
+npm test         # unit tests (indicators, scoring, data files)
+npm run build    # static site in dist/, deploy to GitHub Pages or Vercel
+```
+
+## Where things are
+
+| Path | Purpose |
+| --- | --- |
+| `src/api/power.js` | NASA POWER client: retry, timeout, -999 filtering, cache |
+| `src/api/soilgrids.js` | SoilGrids (ISRIC, not NASA), optional |
+| `src/indicators/` | Pure climate indicator maths (rain, dry spells, heat, frost, ET0, water balance, trends) |
+| `src/scoring/` | Component scores, weighting, explanations, confidence |
+| `src/data/crops.json` | Crop table. Estimates, `verified: false` until you check each value |
+| `src/data/rotations.json` | Baseline presets and strategy candidates |
+| `src/data/weights.json` | Every scoring weight and threshold |
+| `public/data/power_coimbatore_2005_2024.json` | Real POWER download for the demo farm, used only as a labelled fallback |
+
+## To do before the demo (yours)
+
+1. Verify every value in `crops.json` against TNAU / ICAR / FAO, fill `source`, set `verified: true`.
+2. Review the weights in `weights.json`.
+3. Compare POWER rainfall with a local rain record. At Coimbatore POWER gives about 1,200 mm a year, which looks high for the area.
+4. Check the SoilGrids endpoint (it did not answer during development, so the fallback path is what was tested).
+
+## Not integrated
+
+MODIS NDVI, SMAP, GPM, SRTM, GRACE. The app lists each one under information gaps.
