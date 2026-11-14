@@ -7,7 +7,7 @@ export const MAX_CUSTOM_CROPS = 3
 
 const isMatch = (r, zone) => zone && r.zones.includes(zone.group)
 
-export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone }) {
+export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone, compact = false }) {
   const matching = rotations.baselinePresets.filter((r) => isMatch(r, zone))
   const others = rotations.baselinePresets.filter((r) => !isMatch(r, zone))
   const setSlot = (i, patch) => {
@@ -15,23 +15,26 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
     onChange({ baselineCrops: slots, presetId: 'custom' })
   }
   return (
-    <section aria-labelledby="farm-h">
-      <h2 id="farm-h">2. About your farm</h2>
-      <div className="row">
+    <section aria-labelledby="farm-h" className={compact ? 'form-compact' : ''}>
+      {!compact && (
+        <>
+          <h2 id="farm-h">Tell us about your farm</h2>
+          <p className="lead">These answers decide how much water your crops can count on and what your current rotation is.</p>
+        </>
+      )}
+      <div className="grid3">
         <label>
           Soil type
           <select value={farm.soilType} onChange={(e) => onChange({ soilType: e.target.value })}>
             {soils.types.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
+              <option key={s.id} value={s.id}>{s.label}</option>
             ))}
           </select>
         </label>
         <label>
           Water source
           <select value={farm.waterSource} onChange={(e) => onChange({ waterSource: e.target.value })}>
-            <option value="rainfed">Rainfed (only rain)</option>
+            <option value="rainfed">Rain only (rainfed)</option>
             <option value="borewell">Well or borewell</option>
             <option value="canal">Canal, river or irrigation scheme</option>
           </select>
@@ -39,19 +42,21 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
         <label>
           How much water can you rely on?
           <select value={farm.waterAvailability} onChange={(e) => onChange({ waterAvailability: e.target.value })} disabled={farm.waterSource === 'rainfed'}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            <option value="low">A little</option>
+            <option value="medium">A fair amount</option>
+            <option value="high">Plenty</option>
           </select>
         </label>
       </div>
-      <p className="note" aria-live="polite">
-        {soilStatus === 'loading' && 'Checking SoilGrids (ISRIC, not NASA) for soil properties...'}
-        {soilStatus === 'ok' && soilInfo && `SoilGrids (ISRIC, not NASA) suggests ${soilInfo.suggestedType} soil here: sand ${Math.round(soilInfo.sandPct)}%, clay ${Math.round(soilInfo.clayPct)}%. You can change the dropdown.`}
-        {soilStatus === 'error' && 'Soil properties not fetched (SoilGrids did not answer). Please choose the soil type yourself.'}
+      <p className="hint" aria-live="polite">
+        {soilStatus === 'loading' && 'Checking a world soil map (SoilGrids, not NASA) for your spot...'}
+        {soilStatus === 'ok' && soilInfo && `A world soil map (SoilGrids, not NASA) suggests ${soilInfo.suggestedType} soil here: sand ${Math.round(soilInfo.sandPct)}%, clay ${Math.round(soilInfo.clayPct)}%. You can change it above.`}
+        {soilStatus === 'error' && 'The soil map did not answer, so please choose your soil type yourself.'}
       </p>
+
+      <h3>What do you grow now?</h3>
       <label className="block">
-        Your current rotation
+        Start from a common rotation
         <select value={farm.presetId} onChange={(e) => onPreset(e.target.value)}>
           {zone && matching.length > 0 && (
             <optgroup label={`Common in a ${zone.label.toLowerCase()} climate`}>
@@ -65,13 +70,12 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}
           </optgroup>
-          <option value="custom">Build my own</option>
+          <option value="custom">Something else (set it below)</option>
         </select>
       </label>
-      <p className="note">Pick up to 3 crops in the order you grow them. "Best for my climate" lets the tool choose the sowing month from the NASA temperature and rain record. Set your real month if you know it.</p>
-      <div className="custom">
+      <div className="slots">
         {farm.baselineCrops.map((slot, i) => (
-          <div className="row" key={i}>
+          <div className="slot" key={i}>
             <label>
               Crop {i + 1}
               <select value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
@@ -87,7 +91,7 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
               </select>
             </label>
             <label>
-              Year in cycle
+              Which year?
               <select value={slot.year ?? 0} onChange={(e) => setSlot(i, { year: Number(e.target.value) })} disabled={!slot.crop}>
                 <option value={0}>Year 1</option>
                 <option value={1}>Year 2 (alternate years)</option>
@@ -97,7 +101,7 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
             <label>
               Sowing month
               <select value={slot.sowMonth} onChange={(e) => setSlot(i, { sowMonth: e.target.value === 'auto' ? 'auto' : Number(e.target.value) })} disabled={!slot.crop}>
-                <option value="auto">Best for my climate</option>
+                <option value="auto">Let the tool choose</option>
                 {MONTH_NAMES.map((m, k) => (
                   <option key={m} value={k + 1}>{m}</option>
                 ))}
@@ -105,29 +109,38 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone 
             </label>
           </div>
         ))}
-        <p className="note">Crops cannot overlap in the field. If they do, you will see a message with the results.</p>
       </div>
+      <p className="hint">List up to 3 crops in the order you grow them. If you know your real sowing month, set it. Otherwise the tool picks the best month from the NASA temperature and rain record.</p>
     </section>
   )
 }
 
-export function Priorities({ priorities, onChange }) {
-  const items = [
-    ['water', 'Save water', 'Prefer rotations that need less irrigation.'],
-    ['income', 'Income', 'Prefer crops with a higher generic income rating.'],
-    ['soil', 'Soil health', 'Prefer legumes, variety and no back-to-back repeats.'],
-    ['erosion', 'Erosion control', 'Prefer keeping the soil covered in heavy-rain months.'],
-  ]
+const PRIORITY_ITEMS = [
+  ['water', 'Save water', 'Prefer rotations that need less irrigation.'],
+  ['income', 'Earn more', 'Prefer crops with a higher income rating.'],
+  ['soil', 'Build soil health', 'Prefer legumes, variety and no back-to-back repeats.'],
+  ['erosion', 'Protect against erosion', 'Keep the soil covered in heavy-rain months.'],
+]
+
+export function Priorities({ priorities, onChange, compact = false }) {
   return (
-    <section aria-labelledby="prio-h">
-      <h2 id="prio-h">3. What matters most to you?</h2>
-      <p>0 means not important, 10 means very important. Results update as you move the sliders.</p>
-      {items.map(([k, label, hint]) => (
+    <section aria-labelledby="prio-h" className={compact ? 'form-compact' : ''}>
+      {!compact ? (
+        <>
+          <h2 id="prio-h">What matters most to you?</h2>
+          <p className="lead">Move each slider from 0 (not important) to 10 (very important). Results change as you move them.</p>
+        </>
+      ) : (
+        <h3 id="prio-h">What matters most?</h3>
+      )}
+      {PRIORITY_ITEMS.map(([k, label, hint]) => (
         <label className="slider" key={k}>
-          <span>
-            <strong>{label}</strong>: {priorities[k]} of 10 <small>{hint}</small>
+          <span className="slider-top">
+            <strong>{label}</strong>
+            <span className="slider-val">{priorities[k]}/10</span>
           </span>
-          <input type="range" min="0" max="10" step="1" value={priorities[k]} onChange={(e) => onChange({ [k]: Number(e.target.value) })} />
+          {!compact && <small>{hint}</small>}
+          <input type="range" min="0" max="10" step="1" value={priorities[k]} onChange={(e) => onChange({ [k]: Number(e.target.value) })} aria-valuetext={`${priorities[k]} out of 10`} />
         </label>
       ))}
     </section>

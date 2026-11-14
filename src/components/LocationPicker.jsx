@@ -51,9 +51,9 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
 
   return (
     <section aria-labelledby="loc-h">
-      <h2 id="loc-h">1. Where is your farm?</h2>
-      <p>Search for a place, tap the map, use your location, or type the latitude and longitude. The tool works anywhere on land and uses NASA climate data for that point.</p>
-      <form className="row" onSubmit={search}>
+      <h2 id="loc-h">Where is your farm?</h2>
+      <p className="lead">Search for a place, tap the map, or use your location. This works anywhere on land.</p>
+      <form className="searchrow" onSubmit={search}>
         <label>
           Search a place
           <input type="search" value={query} placeholder="Village, town or district" onChange={(e) => setQuery(e.target.value)} />
@@ -79,7 +79,7 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
           {valid && <CircleMarker center={[lat, lon]} radius={10} pathOptions={{ color: '#7a1f00', fillColor: '#ff6a2b', fillOpacity: 0.8 }} />}
         </MapContainer>
       </div>
-      <div className="row">
+      <div className="grid3">
         <label>
           Latitude
           <input type="number" step="0.0001" value={farm.lat} onChange={(e) => onChange({ lat: e.target.value })} />
@@ -89,7 +89,7 @@ export default function LocationPicker({ farm, onChange, onUseDemo }) {
           <input type="number" step="0.0001" value={farm.lon} onChange={(e) => onChange({ lon: e.target.value })} />
         </label>
         <label>
-          Try a demo farm
+          Or try an example farm
           <select value="" onChange={(e) => e.target.value && onUseDemo(e.target.value)}>
             <option value="">Choose...</option>
             {DEMO_FARMS.map((d) => (

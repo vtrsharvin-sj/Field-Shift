@@ -33,7 +33,7 @@ export default function ClimateSnapshot({ ctx, power }) {
   const meta = power.meta
   return (
     <section aria-labelledby="clim-h">
-      <h2 id="clim-h">4. Your climate (NASA data)</h2>
+      <h2 id="clim-h">Your climate, from NASA data</h2>
       <p className="source">
         Source: {powerSourceLabel(meta)}. {Math.round(meta.completeness * 1000) / 10}% of daily values were usable.
         {meta.origin === 'prefetched-example' && <strong> This is a saved example, not a new download.</strong>}

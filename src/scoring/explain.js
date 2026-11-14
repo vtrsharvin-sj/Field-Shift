@@ -165,7 +165,11 @@ function whyFor(ev, baselineEv, kind, strategy, ctx, priorities) {
   gains.forEach(({ k, d }) => {
     let detail = ''
     if (k === 'water') detail = ` It needs about ${r0(Math.max(0, baselineEv.components.water.irrigationNeed - ev.components.water.irrigationNeed))} mm less irrigation per year.`
-    if (k === 'soil') detail = ` Soil-health parts: nitrogen fixing +${r0(ev.components.soil.parts.nFix)}, crop variety +${r0(ev.components.soil.parts.diversity)}, repeat penalty -${r0(ev.components.soil.parts.repeat)}.`
+    if (k === 'soil') {
+      const p = ev.components.soil.parts
+      const bits = [p.nFix > 0 ? 'a nitrogen-fixing crop' : null, p.diversity > 0 ? 'more crop variety' : null, p.repeat === 0 ? 'no back-to-back repeats' : null].filter(Boolean)
+      detail = bits.length ? ` It has ${list(bits)}.` : ''
+    }
     if (k === 'erosion') detail = ` Bare months: ${monthList(ev.components.erosion.bareMonths)} (yours: ${monthList(baselineEv.components.erosion.bareMonths)}).`
     if (k === 'income') detail = ' This is a generic rating, not a price forecast.'
     why.push(`${labels[k]} is ${r0(d)} points higher than your current rotation.${detail}${(prio[k] ?? 0) >= 0.3 ? ' This matches one of your top priorities.' : ''}`)
@@ -258,3 +262,41 @@ export function buildCards({ comparison, ctx, priorities, soilInfo }) {
   return { cards, skipped, error: null }
 }
 
+
+export const COMPONENT_HELP = {
+  water: 'How well the crops fit the rain and water you have. Higher means smaller shortfalls and less irrigation.',
+  income: 'A generic income rating of the crops. It is not a price forecast.',
+  soil: 'Nitrogen-fixing crops, deep roots, crop variety and no back-to-back repeats.',
+  erosion: 'How well the soil stays covered, especially in heavy-rain months.',
+  heat: 'Few very hot days and frost nights during the crop seasons.',
+  pest: 'No back-to-back repeats of the same crop or family, and low humidity for disease-prone crops.',
+  climate: "Season temperatures stay inside the crop's comfortable range and the crop survives the coldest nights.",
+}
+
+/** Plain-words label for a 0-100 score. Text carries the meaning, so colour is never the only signal. */
+export function verdict(score) {
+  if (score >= 70) return { label: 'Strong fit', tone: 'good' }
+  if (score >= 50) return { label: 'Fair fit', tone: 'fair' }
+  return { label: 'Weak fit', tone: 'weak' }
+}
+
+export const CONFIDENCE_HELP = {
+  High: 'Several checks passed. Still confirm with a local expert.',
+  Medium: 'Use this as a good starting point and check the risks with a local expert.',
+  Low: 'Treat this as a starting point only. Check with a local expert before changing anything.',
+}
+
+/** One headline for the top of the results page. */
+export function buildSummary(cards) {
+  if (!cards.length) return null
+  const base = cards[0]
+  const best = [...cards].sort((a, b) => b.overall - a.overall)[0]
+  const gain = best.overall - base.overall
+  if (best === base) {
+    return { kind: 'keep', headline: 'Your current rotation is already the best fit', detail: `It scores ${r0(base.overall)} out of 100. The alternatives scored lower for your priorities.`, reasons: [], best, base, gain: 0 }
+  }
+  if (gain < 3) {
+    return { kind: 'close', headline: 'Your options are about equal', detail: `${best.name} scores ${r0(best.overall)} and your current rotation scores ${r0(base.overall)}. The difference is too small to rely on.`, reasons: best.why.slice(1, 3), best, base, gain }
+  }
+  return { kind: 'switch', headline: `${best.name} could suit your farm better`, detail: `It scores ${r0(best.overall)} out of 100 against ${r0(base.overall)} for your current rotation (+${r0(gain)} points).`, reasons: best.why.slice(1, 3), best, base, gain }
+}

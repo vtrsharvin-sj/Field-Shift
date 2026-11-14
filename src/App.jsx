@@ -3,21 +3,18 @@ import crops from './data/crops.json'
 import rotations from './data/rotations.json'
 import soils from './data/soils.json'
 import weights from './data/weights.json'
-import { DISCLAIMER } from './data/glossary.js'
 import { CACHED_EXAMPLE_NAME, CACHED_EXAMPLE_URL, DEFAULT_PRIORITIES, DEMO_FARMS, WINDOW } from './demo.js'
 import { fetchPower, loadCachedExample, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchLayer, fetchLandCover } from './api/satellite.js'
 import { fetchSlope } from './api/elevation.js'
-import SatelliteSection from './components/SatelliteSection.jsx'
 import { buildContext } from './scoring/engine.js'
 import { compareStrategies } from './scoring/planner.js'
 import { buildCards } from './scoring/explain.js'
 import LocationPicker from './components/LocationPicker.jsx'
 import { FarmForm, Priorities, MAX_CUSTOM_CROPS } from './components/FarmForm.jsx'
-import ClimateSnapshot from './components/ClimateSnapshot.jsx'
-import RotationCards from './components/RotationCards.jsx'
-import About from './components/About.jsx'
+import Results from './components/Results.jsx'
+import { Footer, Header, Hero, Loading, Stepper } from './components/Shell.jsx'
 
 const emptySlots = () => Array.from({ length: MAX_CUSTOM_CROPS }, () => ({ crop: '', sowMonth: 'auto', year: 0 }))
 
@@ -37,14 +34,24 @@ export default function App() {
   const [data, setData] = useState({ status: 'idle', power: null, error: null })
   const [soil, setSoil] = useState({ status: 'idle', info: null })
   const [sat, setSat] = useState({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
+  const [view, setView] = useState('wizard') // wizard | loading | results
+  const [step, setStep] = useState(0)
+  const [showHero, setShowHero] = useState(true)
 
   const patchFarm = useCallback((p) => setFarm((f) => ({ ...f, ...p })), [])
+  const resetSat = () => setSat({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
 
   async function loadData(f = farm) {
     const bad = validateLocation(f.lat, f.lon)
-    if (bad) return setData({ status: 'error', power: null, error: bad })
+    if (bad || f.lat === '' || f.lon === '') {
+      setData({ status: 'error', power: null, error: bad ?? 'Choose a location first.' })
+      setView('wizard')
+      return setStep(0)
+    }
+    setShowHero(false)
+    setView('loading')
     setData({ status: 'loading', power: null, error: null })
-    setSat({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
+    resetSat()
     setSoil({ status: 'loading', info: null })
     fetchSoil(f.lat, f.lon)
       .then((info) => {
@@ -55,19 +62,26 @@ export default function App() {
     try {
       const power = await fetchPower({ lat: f.lat, lon: f.lon, ...WINDOW })
       setData({ status: 'ok', power, error: null })
+      setView('results')
     } catch (e) {
       setData({ status: 'error', power: null, error: e.message })
+      setView('wizard')
+      setStep(2)
     }
   }
 
   async function useExample() {
+    setView('loading')
     setData({ status: 'loading', power: null, error: null })
-    setSat({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
+    resetSat()
     try {
       const power = await loadCachedExample(CACHED_EXAMPLE_URL)
       setData({ status: 'ok', power, error: null })
+      setView('results')
     } catch (e) {
       setData({ status: 'error', power: null, error: e.message })
+      setView('wizard')
+      setStep(2)
     }
   }
 
@@ -76,7 +90,6 @@ export default function App() {
     if (!m) return
     const point = { lat: m.lat, lon: m.lon }
     const raw = { errors: {} }
-    // 3 layers x chunked requests + land cover + slope
     const totals = { ndvi: [0, 0], et: [0, 0], lst: [0, 0] }
     const report = () => setSat((s) => ({ ...s, progress: { done: Object.values(totals).reduce((a, t) => a + t[0], 0), total: Object.values(totals).reduce((a, t) => a + t[1], 0) } }))
     setSat({ status: 'loading', raw: null, progress: { done: 0, total: 0 } })
@@ -117,68 +130,86 @@ export default function App() {
   const result = useMemo(() => {
     if (!ctx) return null
     const baselineEntries = farm.baselineCrops.filter((s) => s.crop)
-    if (!baselineEntries.length) return { error: 'Choose at least one crop for your current rotation (step 2).', cards: [] }
+    if (!baselineEntries.length) return { error: 'Choose at least one crop for your current rotation (use "Edit soil, water and current rotation").', cards: [], skipped: [] }
     const comparison = compareStrategies({ baselineEntries, strategies: rotations.strategies, ctx, priorities })
     return buildCards({ comparison, ctx, priorities, soilInfo: soil.info })
   }, [ctx, farm.baselineCrops, priorities, soil.info])
 
-  const moved = data.power && data.power.meta.origin !== 'prefetched-example' && (Number(farm.lat).toFixed(2) !== Number(data.power.meta.lat).toFixed(2) || Number(farm.lon).toFixed(2) !== Number(data.power.meta.lon).toFixed(2))
+  const locationOk = farm.lat !== '' && farm.lon !== '' && !validateLocation(farm.lat, farm.lon)
+  const cropsOk = farm.baselineCrops.some((s) => s.crop)
+  const canGo = (i) => i === 0 || (i === 1 && locationOk) || (i === 2 && locationOk && cropsOk)
+  const goHome = () => {
+    setView('wizard')
+    setStep(0)
+    setShowHero(true)
+  }
 
   return (
-    <main>
-      <header className="top">
-        <h1>Crop Rotation Helper</h1>
-        <p>Compare crop rotations for your farm using NASA climate data.</p>
-        <p className="disclaimer" role="note">{DISCLAIMER}</p>
-      </header>
+    <div className="app">
+      <Header onHome={goHome} showHome={view === 'results'} />
+      <main id="main">
+        {view === 'wizard' && showHero && step === 0 && <Hero onStart={() => setShowHero(false)} onDemo={useDemo} />}
 
-      <LocationPicker farm={farm} onChange={patchFarm} onUseDemo={useDemo} />
-      <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} />
-      <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
-
-      <section className="fetch" aria-live="polite">
-        <button type="button" className="primary" onClick={() => loadData()} disabled={data.status === 'loading'}>
-          {data.status === 'loading' ? 'Getting NASA data (this can take up to a minute)...' : 'Get NASA data and compare rotations'}
-        </button>
-        {moved && <p className="note">The location changed since the last download. Press the button again to update.</p>}
-        {data.status === 'error' && (
-          <div className="error" role="alert">
-            <p>{data.error}</p>
-            <p>You can try again, or look at the saved example for {CACHED_EXAMPLE_NAME}. The example is real NASA POWER data downloaded earlier and is clearly labelled as such. It does not describe your location.</p>
-            <button type="button" className="secondary" onClick={useExample}>
-              Use saved example data ({CACHED_EXAMPLE_NAME})
-            </button>
+        {view === 'wizard' && !showHero && (
+          <div className="wizard">
+            <Stepper step={step} onGo={setStep} canGo={canGo} />
+            <div className="card-plain">
+              {step === 0 && <LocationPicker farm={farm} onChange={patchFarm} onUseDemo={useDemo} />}
+              {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} />}
+              {step === 2 && (
+                <>
+                  <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
+                  {data.status === 'error' && (
+                    <div className="error" role="alert">
+                      <p><strong>We could not get the NASA data.</strong></p>
+                      <p>{data.error}</p>
+                      <p>You can try again, or look at a saved example for {CACHED_EXAMPLE_NAME}. The example is real NASA data downloaded earlier and does not describe your farm.</p>
+                      <button type="button" className="secondary" onClick={useExample}>Show the saved example ({CACHED_EXAMPLE_NAME})</button>
+                    </div>
+                  )}
+                </>
+              )}
+              <div className="nav">
+                <button type="button" className="ghost" onClick={() => (step === 0 ? goHome() : setStep(step - 1))}>Back</button>
+                {step < 2 ? (
+                  <button type="button" className="primary" onClick={() => setStep(step + 1)} disabled={!canGo(step + 1)}>
+                    Next
+                  </button>
+                ) : (
+                  <button type="button" className="primary" onClick={() => loadData()} disabled={!canGo(2)}>
+                    Show my recommendations
+                  </button>
+                )}
+              </div>
+              {step === 0 && !locationOk && <p className="hint" aria-live="polite">Choose a spot on the map, search for a place, or type coordinates to continue.</p>}
+              {step === 1 && !cropsOk && <p className="hint" aria-live="polite">Choose at least one crop that you grow now.</p>}
+            </div>
           </div>
         )}
-      </section>
 
-      {data.status === 'ok' && ctx && result && (
-        <>
-          <ClimateSnapshot ctx={ctx} power={data.power} />
-          <SatelliteSection ctx={ctx} status={sat.status} progress={sat.progress} errors={sat.raw?.errors ?? {}} onLoad={loadSatellite} />
-          <section aria-labelledby="scen-h" className="scenario">
-            <h2 id="scen-h">What if the climate changes? (optional)</h2>
-            <label className="slider">
-              <span><strong>Rainfall change</strong>: {scenario.rainChangePct > 0 ? '+' : ''}{scenario.rainChangePct}%</span>
-              <input type="range" min={weights.scenario.rainChangeRangePct[0]} max={weights.scenario.rainChangeRangePct[1]} step="5" value={scenario.rainChangePct} onChange={(e) => setScenario((s) => ({ ...s, rainChangePct: Number(e.target.value) }))} />
-            </label>
-            <label className="slider">
-              <span><strong>Warming</strong>: +{scenario.tempChangeC} C</span>
-              <input type="range" min={weights.scenario.tempChangeRangeC[0]} max={weights.scenario.tempChangeRangeC[1]} step="0.5" value={scenario.tempChangeC} onChange={(e) => setScenario((s) => ({ ...s, tempChangeC: Number(e.target.value) }))} />
-            </label>
-            <p className="note">A what-if test on top of the real record (all rain values multiplied, all temperatures shifted). It is not a forecast, and it lowers confidence.</p>
-          </section>
-          <RotationCards result={result} priorities={priorities} />
-          <p className="print-row">
-            <button type="button" className="secondary" onClick={() => window.print()}>Save or print this page as PDF</button>
-          </p>
-        </>
-      )}
+        {view === 'loading' && <Loading stage={1} />}
 
-      <About />
-      <footer>
-        <p>{DISCLAIMER}</p>
-      </footer>
-    </main>
+        {view === 'results' && data.status === 'ok' && ctx && result && (
+          <Results
+            ctx={ctx}
+            result={result}
+            power={data.power}
+            farm={farm}
+            onFarm={patchFarm}
+            onPreset={onPreset}
+            priorities={priorities}
+            onPriorities={(p) => setPriorities((cur) => ({ ...cur, ...p }))}
+            scenario={scenario}
+            setScenario={setScenario}
+            soil={soil}
+            sat={sat}
+            onLoadSat={loadSatellite}
+            onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}
+            onPrint={() => window.print()}
+          />
+        )}
+      </main>
+      <Footer />
+    </div>
   )
 }

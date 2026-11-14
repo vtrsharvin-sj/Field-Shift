@@ -23,7 +23,7 @@ export default function SatelliteSection({ sat, status, progress, errors, onLoad
   const s = ctx?.satellite
   return (
     <section aria-labelledby="sat-h">
-      <h2 id="sat-h">4b. NASA satellite layers (optional, slower)</h2>
+      <h2 id="sat-h">NASA satellite layers (optional)</h2>
       <p>
         Adds satellite greenness (<Term id="ndvi">NDVI</Term>), observed water use (<Term id="evapotranspiration">evapotranspiration</Term>), ground temperature, a farmland check and slope for the farm point. Each layer is downloaded separately. If one fails, the rest still work and the failure is listed under information gaps.
       </p>
