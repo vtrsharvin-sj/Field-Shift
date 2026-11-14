@@ -36,6 +36,26 @@ export function windowRecords(index, startYear, startMonth, lengthDays) {
 }
 
 /**
+ * A crop season measured in "growing days" instead of calendar days. Days colder than baseT do not count
+ * (the crop is dormant), so a winter cereal sown in autumn occupies the field until spring.
+ * Returns the daily records from the 1st of the sowing month, or null if the crop cannot collect enough
+ * growing days within maxLen calendar days (or the record ends first).
+ */
+export function thermalWindow(index, startYear, startMonth, targetDays, baseT, maxLen = 400) {
+  const start = dayNumber(startYear, startMonth, 1)
+  const recs = []
+  let grow = 0
+  for (let i = 0; i < maxLen; i += 1) {
+    const r = index.get(start + i)
+    if (!r) return null
+    recs.push(r)
+    if (r.t2m == null || r.t2m >= baseT) grow += 1
+    if (grow >= targetDays) return recs
+  }
+  return null
+}
+
+/**
  * Reference evapotranspiration (mm/day) by the Hargreaves-Samani method (FAO-56 eq. 52).
  * Chosen because it needs only temperature and latitude and is stable at point scale.
  */
@@ -63,7 +83,7 @@ export function heavyRainThreshold(days, opts = DEFAULTS) {
 }
 
 /** Statistics for one season window (one year). */
-export function seasonYearStats(recs, { lat, kc = 1, heatThresholdC, frostThresholdC, heavyMm }) {
+export function seasonYearStats(recs, { lat, kc = 1, heatThresholdC, frostThresholdC, heavyMm, baseT = null }) {
   const valid = (k) => recs.filter((r) => r[k] != null)
   const rainDays = valid('rain')
   const et0Days = recs
@@ -85,6 +105,10 @@ export function seasonYearStats(recs, { lat, kc = 1, heatThresholdC, frostThresh
     soilWetness: soil.length ? mean(soil) : null,
     meanRh: mean(valid('rh').map((r) => r.rh)),
     meanTmax: mean(valid('tmax').map((r) => r.tmax)),
+    meanT: mean(valid('t2m').filter((r) => baseT == null || r.t2m >= baseT).map((r) => r.t2m)),
+    sowT: mean(valid('t2m').slice(0, 14).map((r) => r.t2m)),
+    coldestNight: valid('tmin').length ? Math.min(...valid('tmin').map((r) => r.tmin)) : null,
+    lengthDays: recs.length,
   }
 }
 
@@ -92,12 +116,12 @@ export function seasonYearStats(recs, { lat, kc = 1, heatThresholdC, frostThresh
  * Indicators for one crop season (sowing month + duration), averaged across all years with a complete window.
  * Returns null when no full season fits in the data.
  */
-export function seasonIndicators(days, index, { lat, sowMonth, durationDays, kc = 1, heatThresholdC = DEFAULTS.heatThresholdC, heavyMm = null }) {
+export function seasonIndicators(days, index, { lat, sowMonth, durationDays, kc = 1, heatThresholdC = DEFAULTS.heatThresholdC, heavyMm = null, baseT = null, killC = null }) {
   const years = [...new Set(days.map((d) => d.year))]
   const perYear = []
   years.forEach((y) => {
-    const recs = windowRecords(index, y, sowMonth, durationDays)
-    if (recs) perYear.push({ year: y, ...seasonYearStats(recs, { lat, kc, heatThresholdC, frostThresholdC: DEFAULTS.frostThresholdC, heavyMm }) })
+    const recs = baseT == null ? windowRecords(index, y, sowMonth, durationDays) : thermalWindow(index, y, sowMonth, durationDays, baseT)
+    if (recs) perYear.push({ year: y, ...seasonYearStats(recs, { lat, kc, heatThresholdC, frostThresholdC: DEFAULTS.frostThresholdC, heavyMm, baseT }) })
   })
   if (!perYear.length) return null
   const col = (k) => perYear.map((p) => p[k]).filter((v) => v != null)
@@ -118,6 +142,13 @@ export function seasonIndicators(days, index, { lat, sowMonth, durationDays, kc 
     waterBalanceDryYear: percentile(balances, 20), // a "dry year": 1 year in 5 is worse than this
     soilWetnessMean: col('soilWetness').length ? mean(col('soilWetness')) : null,
     rhMean: mean(col('meanRh')),
+    tmeanMean: mean(col('meanT')),
+    sowTempMean: mean(col('sowT')),
+    lengthMean: mean(col('lengthDays')),
+    killShare: killC == null ? 0 : col('coldestNight').filter((t) => t < killC).length / Math.max(1, col('coldestNight').length),
+    coldestNightMean: mean(col('coldestNight')),
+    tmeanMin: Math.min(...col('meanT')),
+    tmeanMax: Math.max(...col('meanT')),
     heatDaysDryYear: percentile(col('heatDays'), 80),
   }
 }

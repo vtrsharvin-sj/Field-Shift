@@ -11,6 +11,7 @@ export const COMPONENT_LABELS = {
   erosion: 'Erosion protection',
   heat: 'Heat and frost safety',
   pest: 'Pest and disease safety',
+  climate: 'Temperature fit',
 }
 
 const r0 = (x) => Math.round(x)
@@ -26,7 +27,8 @@ export function powerSourceLabel(meta) {
       : meta.origin === 'live'
         ? 'fetched live'
         : `from browser cache (fetched ${String(meta.fetchedAt ?? '').slice(0, 10)})`
-  return `NASA POWER, about 50 km grid cell (not a field measurement), ${span}, ${origin}`
+  const where = meta.lat != null && meta.lon != null ? ` at ${Number(meta.lat).toFixed(2)}, ${Number(meta.lon).toFixed(2)}` : ''
+  return `NASA POWER${where}, about 50 km grid cell (not a field measurement), ${span}, ${origin}`
 }
 
 /** Months (1-12) formatted as a readable list. */
@@ -37,7 +39,8 @@ function globalGaps(ctx, soilInfo) {
   gaps.push('No soil test: soil is set from the dropdown, so water holding and fertility are rough.')
   if (soilInfo?.error || !soilInfo) gaps.push('Soil properties not fetched (SoilGrids was not reachable or not used), so the soil type dropdown was used.')
   else gaps.push(`SoilGrids (ISRIC, not NASA) suggested ${soilInfo.suggestedType} soil here (sand ${r0(soilInfo.sandPct)}%, clay ${r0(soilInfo.clayPct)}%). It is about 250 m resolution and was not used in the scores other than to pre-fill the dropdown.`)
-  gaps.push('Crop traits, sowing months and market notes are estimates from the project brief and are not yet verified against TNAU, ICAR or FAO.')
+  gaps.push('Crop traits come from FAO tables (Kc from FAO-56, temperature ranges in the style of FAO EcoCrop) entered by the developer and not yet checked crop by crop. Ratings for income, drought tolerance and cover are generic estimates. Local varieties differ.')
+  gaps.push('Sowing months were chosen from the temperature and rain record at this point, not from local planting calendars. Season lengths use mid-range crop durations. Check both with a local expert.')
   gaps.push('Market prices are not included. Income is a generic rating, not a profit forecast.')
   const sat = ctx.satellite
   const err = sat?.errors ?? {}
@@ -79,6 +82,8 @@ function evidenceFor(ev, ctx) {
       const hot = seasonMonthValues(sat.lst.hotShare, it.sowMonth, it.durationDays)
       if (hot != null) lines.push({ text: `${name}: ground surface was above ${ctx.weights.satellite.lstHotC} C in about ${(hot * 100).toFixed(0)}% of the 8-day readings in these months.`, source: `MODIS MOD11A2, ${sat.lst.years.join(', ')}, 1 km, 8-day (NASA, via ORNL DAAC). Ground runs hotter than air.` })
     }
+    if (ev.items.length && it.year > 0) lines.push({ text: `${name} is grown in year ${it.year + 1} of a ${ev.items.reduce((m, x) => Math.max(m, x.year + 1), 1)}-year cycle.`, source: 'Rotation definition' })
+    lines.push({ text: `${name}: average temperature in this season is ${s.tmeanMean.toFixed(1)} C on growing days (coldest year ${s.tmeanMin.toFixed(1)}, warmest ${s.tmeanMax.toFixed(1)}). The crop's comfortable range is ${it.crop.tempRangeC.optMin} to ${it.crop.tempRangeC.optMax} C.`, source: `${src}; ranges in crops.json` })
     if (s.soilWetnessMean != null) lines.push({ text: `${name}: root-zone soil wetness is usually ${s.soilWetnessMean.toFixed(2)} on a 0 (dry) to 1 (wet) scale.`, source: `${src}, GWETROOT (modelled, not measured)` })
   })
   const e = ev.components.erosion
@@ -112,6 +117,11 @@ function risksFor(ev, ctx, baselineEv) {
     if (row.ratioDry > 0.15) out.push(`${it.crop.name}: in a dry year (about 1 year in 5) usable rain plus your water source covers roughly ${r0(100 * (1 - row.ratioDry))}% of what the crop needs.`)
     if (s.heatDaysMean / it.durationDays > w.heat.toleratedHeatShare) out.push(`${it.crop.name}: about ${s.heatDaysMean.toFixed(1)} very hot days per season. Check heat-sensitive stages such as flowering with a local expert.`)
     if (s.frostDaysMean > 0) out.push(`${it.crop.name}: frost nights are possible (${s.frostDaysMean.toFixed(1)} per season).`)
+    const cf = ev.components.climate.rows[i]
+    const killC = ctx.weights.heat.frostKillByTolerance[it.crop.frostSensitivity]
+    if (s.killShare >= 0.1) out.push(`${it.crop.name}: in about ${Math.round(s.killShare * 100)}% of the ${s.years} years, a night in this season fell below ${killC} C, which this crop may not survive.`)
+    if (cf.sowFit < 60) out.push(`${it.crop.name}: it is cold at sowing (about ${cf.sowTemp.toFixed(1)} C in the first two weeks). Sowing may need to wait.`)
+    if (cf.fit < 60) out.push(`${it.crop.name}: the average season temperature (${cf.tMean.toFixed(1)} C) is outside its comfortable range (${it.crop.tempRangeC.optMin} to ${it.crop.tempRangeC.optMax} C). Yield is likely to suffer.`)
     if (it.crop.diseaseProneness >= 3) out.push(`${it.crop.name}: ${it.crop.diseaseNotes}`)
     out.push(`${it.crop.name}: ${it.crop.marketNotes.replace(/\.$/, "")} (needs local verification).`)
   })
@@ -132,7 +142,7 @@ const sat = ctx.satellite
     const low = ev.items.some((it) => { const r = seasonMonthValues(sat.et.ratio, it.sowMonth, it.durationDays); return r != null && r < ctx.weights.satellite.waterStressRatioLow })
     if (low) out.push('Satellite ET was low compared with potential ET during a crop season here, which can mean the land was short of water (or not cropped). Ask a local expert.')
   }
-  out.push('Sowing months are typical values. Local variety, rainfall onset and advice from an extension officer should set the real dates.')
+  out.push('Sowing months are modelled from the climate record. Local variety, the real start of the rains and advice from an extension officer should set the dates.')
   return unique(out)
 }
 

@@ -17,7 +17,8 @@ export default function About() {
       <ul>
         <li><strong>NASA POWER</strong> (live): daily temperature, rain, humidity, sunshine and modelled soil wetness, about 50 km grid, 2005 to 2024. It is a model and satellite blend, so local rain can differ, especially near hills.</li>
         <li><strong>SoilGrids</strong> (ISRIC, not NASA, live): soil sand, clay and carbon. Used only to suggest a soil type.</li>
-        <li><strong>Crop table</strong>: starting estimates from the project brief for Tamil Nadu. Not yet checked against TNAU, ICAR or FAO.</li>
+        <li><strong>Crop table</strong>: 37 crops with crop coefficients from FAO-56 and temperature ranges in the style of FAO EcoCrop. Entered by the developer and not yet checked crop by crop. Local varieties differ.</li>
+        <li><strong>Where it works</strong>: any land location. Sowing months and candidate rotations are worked out from the climate at your point, so results for a region you know well are the best test.</li>
         <li><strong>Not included</strong>: MODIS NDVI, SMAP soil moisture, GPM rainfall, SRTM slope, GRACE groundwater, soil tests, market prices.</li>
       </ul>
       <h3>Limits of the tool</h3>

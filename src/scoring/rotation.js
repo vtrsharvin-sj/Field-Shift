@@ -1,4 +1,5 @@
-// Rotation helpers: turn a rotation definition into crop windows and monthly occupancy. Pure functions.
+// Rotation helpers: turn a rotation definition into crop windows and field occupancy. Pure functions.
+// A rotation is a cycle of one or more years. Each crop has a sowing month and a year in the cycle (0 = first year).
 
 const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 const MONTH_START = MONTH_DAYS.reduce((acc, d, i) => (acc.push(i === 0 ? 0 : acc[i - 1] + MONTH_DAYS[i - 1]), acc), [])
@@ -7,24 +8,28 @@ export const midDuration = (crop) => Math.round((crop.durationDays[0] + crop.dur
 
 export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-/** Attach crop records and durations. Unknown crop ids throw so bad data is never silently skipped. */
-export function resolveRotation(rotation, cropsById) {
-  return rotation.crops.map((c) => {
+/** Attach crop records. `durations` (optional) gives the calendar days each crop occupies; the default is the mid-range crop duration. */
+export function resolveRotation(rotation, cropsById, durations = null) {
+  return rotation.crops.map((c, i) => {
     const crop = cropsById[c.crop]
     if (!crop) throw new Error(`Unknown crop "${c.crop}" in rotation "${rotation.id}".`)
-    return { crop, sowMonth: c.sowMonth, durationDays: midDuration(crop) }
+    return { crop, sowMonth: c.sowMonth, year: c.year ?? 0, durationDays: durations ? durations[i] : midDuration(crop) }
   })
 }
 
-/** Which days of a 365-day year each crop occupies (wrapping past 31 Dec). Returns an array of crop indexes or -1 for bare. */
-export function dayOccupancy(items) {
-  const occ = new Array(365).fill(-1)
+export const rotationYears = (items) => Math.max(1, ...items.map((it) => (it.year ?? 0) + 1))
+
+/** For each year of the cycle, which crop index occupies each day of a 365-day year (-1 bare, -2 overlap). A crop running past 31 Dec carries into the next year of the cycle. */
+export function occupancyByYear(items) {
+  const years = rotationYears(items)
+  const occ = Array.from({ length: years }, () => new Array(365).fill(-1))
   items.forEach((it, idx) => {
     const start = MONTH_START[it.sowMonth - 1]
     for (let i = 0; i < Math.min(it.durationDays, 365); i += 1) {
-      const d = (start + i) % 365
-      if (occ[d] === -1) occ[d] = idx
-      else occ[d] = -2 // overlap
+      const abs = start + i
+      const yr = ((it.year ?? 0) + Math.floor(abs / 365)) % years
+      const d = abs % 365
+      occ[yr][d] = occ[yr][d] === -1 ? idx : -2
     }
   })
   return occ
@@ -34,18 +39,32 @@ export function dayOccupancy(items) {
 export function validateRotation(items) {
   const problems = []
   if (!items.length) problems.push('Add at least one crop.')
-  if (dayOccupancy(items).some((v) => v === -2)) problems.push('Two crops overlap in the field. Move a sowing month or remove a crop.')
+  else if (occupancyByYear(items).some((y) => y.some((v) => v === -2))) problems.push('Two crops overlap in the field. Move a sowing month or year, or remove a crop.')
   return problems
 }
 
-/** Share of each month (0 to 1) with no crop in the field. */
+/** Share of each month (0 to 1) with no crop in the field, averaged over the years of the cycle. */
 export function bareFractionByMonth(items) {
-  const occ = dayOccupancy(items)
+  const occ = occupancyByYear(items)
   return MONTH_DAYS.map((len, m) => {
     let bare = 0
-    for (let d = 0; d < len; d += 1) if (occ[MONTH_START[m] + d] === -1) bare += 1
-    return bare / len
+    occ.forEach((year) => {
+      for (let d = 0; d < len; d += 1) if (year[MONTH_START[m] + d] === -1) bare += 1
+    })
+    return bare / (len * occ.length)
   })
 }
 
-export const totalCropDays = (items) => Math.min(365, items.reduce((s, it) => s + it.durationDays, 0))
+/** Crop days in the field per year of the cycle. */
+export function yearTotals(items) {
+  const years = rotationYears(items)
+  const t = new Array(years).fill(0)
+  items.forEach((it) => { t[it.year ?? 0] += it.durationDays })
+  return t.map((v) => Math.min(365, v))
+}
+
+/** Average crop days in the field per year. */
+export const totalCropDays = (items) => {
+  const t = yearTotals(items)
+  return t.reduce((a, b) => a + b, 0) / t.length
+}

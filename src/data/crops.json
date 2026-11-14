@@ -1,51 +1,200 @@
 [
   {
-    "id": "rice",
-    "name": "Rice",
-    "localName": "Nel",
+    "id": "wheat",
+    "name": "Wheat",
     "family": "Poaceae",
-    "seasons": [
-      "Kharif",
-      "Rabi"
-    ],
+    "role": "main",
     "durationDays": [
       110,
+      180
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.15,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 3,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 30,
+    "frostSensitivity": 0,
+    "tempRangeC": {
+      "absMin": 0,
+      "optMin": 8,
+      "optMax": 22,
+      "absMax": 32
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Rusts and Fusarium head blight in warm, humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Price follows national and world grain markets.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "barley",
+    "name": "Barley",
+    "family": "Poaceae",
+    "role": "main",
+    "durationDays": [
+      90,
       150
     ],
-    "waterNeed": 5,
-    "droughtTolerance": 1,
-    "nFixing": 0,
-    "rootDepth": 2,
-    "erosionCover": 2,
-    "incomePotential": 3,
-    "heatThresholdC": 35,
-    "cropCoefficientKc": 1.15,
-    "extraWaterMm": 400,
-    "frostSensitivity": 3,
-    "diseaseProneness": 4,
-    "diseaseNotes": "Blast and sheath blight rise in humid, cloudy spells.",
-    "rotationCompatibility": {
-      "avoidAfter": [
-        "rice"
-      ]
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.15,
+      "end": 0.25
     },
-    "marketNotes": "Puddled rice needs extra water for land preparation and seepage (extra water is an estimate).",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 2,
+    "heatThresholdC": 30,
+    "frostSensitivity": 0,
+    "tempRangeC": {
+      "absMin": 0,
+      "optMin": 8,
+      "optMax": 22,
+      "absMax": 32
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Net blotch, rusts and scald in humid spells.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Feed and malting prices differ a lot.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental",
+      "cold"
+    ]
+  },
+  {
+    "id": "oats",
+    "name": "Oats",
+    "family": "Poaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      130
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.15,
+      "end": 0.25
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 2,
+    "heatThresholdC": 30,
+    "frostSensitivity": 0,
+    "tempRangeC": {
+      "absMin": 0,
+      "optMin": 8,
+      "optMax": 20,
+      "absMax": 30
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Crown rust in warm, humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Smaller market than wheat or barley.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "temperate",
+      "continental",
+      "cold"
+    ],
+    "coverUse": true
+  },
+  {
+    "id": "rye",
+    "name": "Rye",
+    "family": "Poaceae",
+    "role": "main",
+    "durationDays": [
+      120,
+      200
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.05,
+      "end": 0.25
+    },
+    "cropCoefficientKc": 0.76,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 4,
+    "erosionCover": 4,
+    "incomePotential": 2,
+    "heatThresholdC": 30,
+    "frostSensitivity": 0,
+    "tempRangeC": {
+      "absMin": -2,
+      "optMin": 5,
+      "optMax": 20,
+      "absMax": 30
+    },
+    "diseaseProneness": 2,
+    "diseaseNotes": "Ergot in wet weather at flowering.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Small market; also useful as a winter cover.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental",
+      "cold"
+    ],
+    "coverUse": true
   },
   {
     "id": "maize",
     "name": "Maize",
-    "localName": "Makkacholam",
     "family": "Poaceae",
-    "seasons": [
-      "Kharif",
-      "Rabi"
-    ],
+    "role": "main",
     "durationDays": [
       100,
-      120
+      140
     ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.2,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.87,
+    "extraWaterMm": 0,
     "waterNeed": 3,
     "droughtTolerance": 2,
     "nFixing": 0,
@@ -53,33 +202,88 @@
     "erosionCover": 3,
     "incomePotential": 4,
     "heatThresholdC": 35,
-    "cropCoefficientKc": 1,
-    "extraWaterMm": 0,
-    "frostSensitivity": 3,
-    "diseaseProneness": 2,
-    "diseaseNotes": "Fall armyworm and stem borer are common; heat at flowering cuts grain set.",
-    "rotationCompatibility": {
-      "avoidAfter": [
-        "maize"
-      ]
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 10,
+      "optMin": 18,
+      "optMax": 30,
+      "absMax": 38
     },
-    "marketNotes": "Market price varies a lot by year and buyer.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "diseaseProneness": 3,
+    "diseaseNotes": "Fall armyworm, stem borer, rust and gray leaf spot. Heat at flowering cuts grain set.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Price varies by year and buyer.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "rice",
+    "name": "Rice",
+    "family": "Poaceae",
+    "role": "main",
+    "durationDays": [
+      105,
+      150
+    ],
+    "kcStages": {
+      "ini": 1.05,
+      "mid": 1.2,
+      "end": 0.9
+    },
+    "cropCoefficientKc": 1.13,
+    "extraWaterMm": 400,
+    "waterNeed": 5,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 2,
+    "erosionCover": 2,
+    "incomePotential": 3,
+    "heatThresholdC": 35,
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 15,
+      "optMin": 22,
+      "optMax": 30,
+      "absMax": 38
+    },
+    "diseaseProneness": 4,
+    "diseaseNotes": "Blast and sheath blight rise in humid, cloudy spells.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Often has a guaranteed or regulated price; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
   },
   {
     "id": "sorghum",
-    "name": "Sorghum (cholam)",
-    "localName": "Cholam",
+    "name": "Sorghum",
     "family": "Poaceae",
-    "seasons": [
-      "Kharif",
-      "Rabi"
-    ],
+    "role": "main",
     "durationDays": [
       100,
-      120
+      125
     ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1.05,
+      "end": 0.55
+    },
+    "cropCoefficientKc": 0.79,
+    "extraWaterMm": 0,
     "waterNeed": 2,
     "droughtTolerance": 4,
     "nFixing": 0,
@@ -87,32 +291,43 @@
     "erosionCover": 3,
     "incomePotential": 2,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 0.85,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
-    "diseaseProneness": 2,
-    "diseaseNotes": "Shoot fly in late sowings; grain mold if rain falls at grain filling.",
-    "rotationCompatibility": {
-      "avoidAfter": [
-        "sorghum"
-      ]
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 14,
+      "optMin": 22,
+      "optMax": 32,
+      "absMax": 40
     },
-    "marketNotes": "Mainly fodder and food demand; price is usually modest.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "diseaseProneness": 2,
+    "diseaseNotes": "Shoot fly, head smut and grain mold if rain falls at grain filling.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Food, feed and fodder demand; price is usually modest.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
   },
   {
     "id": "pearl-millet",
-    "name": "Pearl millet (kambu)",
-    "localName": "Kambu",
+    "name": "Pearl millet",
     "family": "Poaceae",
-    "seasons": [
-      "Kharif"
-    ],
+    "role": "main",
     "durationDays": [
       75,
-      90
+      100
     ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.74,
+    "extraWaterMm": 0,
     "waterNeed": 1,
     "droughtTolerance": 5,
     "nFixing": 0,
@@ -120,32 +335,42 @@
     "erosionCover": 3,
     "incomePotential": 2,
     "heatThresholdC": 40,
-    "cropCoefficientKc": 0.8,
-    "extraWaterMm": 0,
-    "frostSensitivity": 1,
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 18,
+      "optMin": 25,
+      "optMax": 35,
+      "absMax": 42
+    },
     "diseaseProneness": 2,
     "diseaseNotes": "Downy mildew in wet, humid weather.",
     "rotationCompatibility": {
-      "avoidAfter": [
-        "pearl-millet"
-      ]
+      "avoidAfter": []
     },
-    "marketNotes": "Nutri-cereal demand is rising but local price needs checking.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Demand for millets is rising; local price needs checking.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry"
+    ]
   },
   {
     "id": "finger-millet",
-    "name": "Finger millet (ragi)",
-    "localName": "Ragi",
+    "name": "Finger millet",
     "family": "Poaceae",
-    "seasons": [
-      "Kharif"
-    ],
+    "role": "main",
     "durationDays": [
       100,
-      120
+      125
     ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.74,
+    "extraWaterMm": 0,
     "waterNeed": 2,
     "droughtTolerance": 4,
     "nFixing": 0,
@@ -153,33 +378,135 @@
     "erosionCover": 3,
     "incomePotential": 3,
     "heatThresholdC": 36,
-    "cropCoefficientKc": 0.85,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 14,
+      "optMin": 20,
+      "optMax": 30,
+      "absMax": 36
+    },
     "diseaseProneness": 3,
-    "diseaseNotes": "Blast disease in humid weather.",
+    "diseaseNotes": "Blast in humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Steady local demand; check local market.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "teff",
+    "name": "Teff",
+    "family": "Poaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      130
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.74,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 33,
+    "frostSensitivity": 3,
+    "tempRangeC": {
+      "absMin": 10,
+      "optMin": 16,
+      "optMax": 27,
+      "absMax": 33
+    },
+    "diseaseProneness": 2,
+    "diseaseNotes": "Rust and head smut are usually minor.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Strong local demand where it is a staple.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "soybean",
+    "name": "Soybean",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      140
+    ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.15,
+      "end": 0.5
+    },
+    "cropCoefficientKc": 0.88,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 4,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 4,
+    "heatThresholdC": 35,
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 12,
+      "optMin": 20,
+      "optMax": 30,
+      "absMax": 36
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Rust, sudden death syndrome and white mold (shares white mold with canola and sunflower).",
     "rotationCompatibility": {
       "avoidAfter": [
-        "finger-millet"
+        "canola",
+        "sunflower",
+        "dry-bean"
       ]
     },
-    "marketNotes": "Stable local demand; check local mandi price.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Traded worldwide; price follows the global market.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
   },
   {
     "id": "groundnut",
     "name": "Groundnut",
-    "localName": "Nilakadalai",
     "family": "Fabaceae",
-    "seasons": [
-      "Kharif",
-      "Summer"
-    ],
+    "role": "main",
     "durationDays": [
       100,
-      120
+      130
     ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.15,
+      "end": 0.6
+    },
+    "cropCoefficientKc": 0.89,
+    "extraWaterMm": 0,
     "waterNeed": 3,
     "droughtTolerance": 3,
     "nFixing": 4,
@@ -187,105 +514,269 @@
     "erosionCover": 3,
     "incomePotential": 4,
     "heatThresholdC": 36,
-    "cropCoefficientKc": 0.85,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
+    "frostSensitivity": 4,
+    "tempRangeC": {
+      "absMin": 15,
+      "optMin": 22,
+      "optMax": 30,
+      "absMax": 36
+    },
     "diseaseProneness": 3,
     "diseaseNotes": "Leaf spots and collar rot in humid weather; pod rot in waterlogged soil.",
     "rotationCompatibility": {
-      "avoidAfter": [
-        "groundnut"
-      ]
+      "avoidAfter": []
     },
     "marketNotes": "Oil and nut prices swing between seasons.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
   },
   {
-    "id": "black-gram",
-    "name": "Black gram (urad)",
-    "localName": "Ulundu",
+    "id": "chickpea",
+    "name": "Chickpea",
     "family": "Fabaceae",
-    "seasons": [
-      "Kharif",
-      "Rabi"
-    ],
+    "role": "main",
     "durationDays": [
-      65,
-      75
+      90,
+      130
     ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.77,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 4,
+    "rootDepth": 4,
+    "erosionCover": 2,
+    "incomePotential": 3,
+    "heatThresholdC": 32,
+    "frostSensitivity": 2,
+    "tempRangeC": {
+      "absMin": 5,
+      "optMin": 15,
+      "optMax": 25,
+      "absMax": 32
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Ascochyta blight and Fusarium wilt; wet flowering hurts.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Pulse prices are often supported; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "lentil",
+    "name": "Lentil",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      80,
+      120
+    ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
     "waterNeed": 2,
     "droughtTolerance": 3,
     "nFixing": 4,
     "rootDepth": 2,
-    "erosionCover": 4,
+    "erosionCover": 2,
     "incomePotential": 3,
-    "heatThresholdC": 36,
-    "cropCoefficientKc": 0.8,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
-    "diseaseProneness": 3,
-    "diseaseNotes": "Yellow mosaic virus spreads by whitefly; also affects green gram and cowpea.",
-    "rotationCompatibility": {
-      "avoidAfter": [
-        "black-gram",
-        "green-gram",
-        "cowpea"
-      ]
+    "heatThresholdC": 32,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 4,
+      "optMin": 12,
+      "optMax": 24,
+      "absMax": 30
     },
-    "marketNotes": "Pulse prices are often supported; check current rate.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "diseaseProneness": 3,
+    "diseaseNotes": "Ascochyta, rust and wilt in wet weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Pulse prices are often supported; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
   },
   {
-    "id": "green-gram",
-    "name": "Green gram (moong)",
-    "localName": "Pachai payaru",
+    "id": "dry-bean",
+    "name": "Dry bean",
     "family": "Fabaceae",
-    "seasons": [
-      "Kharif",
-      "Summer"
-    ],
+    "role": "main",
     "durationDays": [
-      60,
-      70
+      70,
+      110
     ],
-    "waterNeed": 2,
-    "droughtTolerance": 3,
-    "nFixing": 4,
-    "rootDepth": 2,
-    "erosionCover": 4,
-    "incomePotential": 3,
-    "heatThresholdC": 36,
-    "cropCoefficientKc": 0.8,
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.15,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.86,
     "extraWaterMm": 0,
-    "frostSensitivity": 2,
-    "diseaseProneness": 3,
-    "diseaseNotes": "Yellow mosaic virus and powdery mildew.",
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 3,
+    "rootDepth": 2,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 32,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 10,
+      "optMin": 18,
+      "optMax": 27,
+      "absMax": 33
+    },
+    "diseaseProneness": 4,
+    "diseaseNotes": "Bean rust, anthracnose and white mold.",
     "rotationCompatibility": {
       "avoidAfter": [
-        "black-gram",
-        "green-gram",
-        "cowpea"
+        "canola",
+        "sunflower",
+        "soybean"
       ]
     },
-    "marketNotes": "Pulse prices are often supported; check current rate.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Price depends on the bean type grown.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "field-pea",
+    "name": "Field pea",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      80,
+      110
+    ],
+    "kcStages": {
+      "ini": 0.5,
+      "mid": 1.15,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.89,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 2,
+    "nFixing": 4,
+    "rootDepth": 2,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 28,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 3,
+      "optMin": 10,
+      "optMax": 20,
+      "absMax": 28
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Ascochyta and powdery mildew.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Feed and food markets; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental",
+      "cold"
+    ]
+  },
+  {
+    "id": "faba-bean",
+    "name": "Faba bean",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      150
+    ],
+    "kcStages": {
+      "ini": 0.5,
+      "mid": 1.15,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.89,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 5,
+    "rootDepth": 4,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 28,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 3,
+      "optMin": 10,
+      "optMax": 20,
+      "absMax": 28
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Chocolate spot and rust in humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Feed and food markets; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
   },
   {
     "id": "cowpea",
-    "name": "Cowpea (cover or forage)",
-    "localName": "Thattaipayaru",
+    "name": "Cowpea",
     "family": "Fabaceae",
-    "seasons": [
-      "Kharif",
-      "Summer"
-    ],
+    "role": "main",
     "durationDays": [
       60,
-      90
+      100
     ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.05,
+      "end": 0.6
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
     "waterNeed": 2,
     "droughtTolerance": 4,
     "nFixing": 5,
@@ -293,68 +784,239 @@
     "erosionCover": 5,
     "incomePotential": 2,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 0.85,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
-    "diseaseProneness": 2,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 16,
+      "optMin": 24,
+      "optMax": 33,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
     "diseaseNotes": "Aphids and yellow mosaic virus.",
     "rotationCompatibility": {
       "avoidAfter": [
         "black-gram",
+        "green-gram"
+      ]
+    },
+    "marketNotes": "Food and fodder crop; low price in many places.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ],
+    "coverUse": true
+  },
+  {
+    "id": "green-gram",
+    "name": "Green gram (mung bean)",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      60,
+      75
+    ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.05,
+      "end": 0.6
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 3,
+    "nFixing": 4,
+    "rootDepth": 2,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 18,
+      "optMin": 25,
+      "optMax": 33,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Yellow mosaic virus and powdery mildew.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "black-gram",
+        "cowpea"
+      ]
+    },
+    "marketNotes": "Pulse prices are often supported; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "black-gram",
+    "name": "Black gram (urad)",
+    "family": "Fabaceae",
+    "role": "main",
+    "durationDays": [
+      65,
+      80
+    ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.05,
+      "end": 0.6
+    },
+    "cropCoefficientKc": 0.83,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 3,
+    "nFixing": 4,
+    "rootDepth": 2,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 36,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 18,
+      "optMin": 25,
+      "optMax": 33,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Yellow mosaic virus spread by whitefly.",
+    "rotationCompatibility": {
+      "avoidAfter": [
         "green-gram",
         "cowpea"
       ]
     },
-    "marketNotes": "Mostly used as fodder or cover; low direct income.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Pulse prices are often supported; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
   },
   {
     "id": "sunflower",
     "name": "Sunflower",
-    "localName": "Suryakanthi",
     "family": "Asteraceae",
-    "seasons": [
-      "Rabi",
-      "Summer"
-    ],
+    "role": "main",
     "durationDays": [
       90,
-      100
+      125
     ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.76,
+    "extraWaterMm": 0,
     "waterNeed": 3,
     "droughtTolerance": 3,
     "nFixing": 0,
     "rootDepth": 5,
     "erosionCover": 2,
     "incomePotential": 3,
-    "heatThresholdC": 36,
-    "cropCoefficientKc": 0.85,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
+    "heatThresholdC": 35,
+    "frostSensitivity": 3,
+    "tempRangeC": {
+      "absMin": 8,
+      "optMin": 18,
+      "optMax": 26,
+      "absMax": 34
+    },
     "diseaseProneness": 3,
-    "diseaseNotes": "Downy mildew and head rot in humid weather.",
+    "diseaseNotes": "Downy mildew, head rot and white mold in humid weather.",
     "rotationCompatibility": {
       "avoidAfter": [
-        "sunflower"
+        "canola",
+        "soybean",
+        "dry-bean"
       ]
     },
     "marketNotes": "Oilseed price varies; check local buyers.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "canola",
+    "name": "Rapeseed / canola / mustard",
+    "family": "Brassicaceae",
+    "role": "main",
+    "durationDays": [
+      100,
+      170
+    ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1.15,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.85,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 30,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 0,
+      "optMin": 10,
+      "optMax": 22,
+      "absMax": 30
+    },
+    "diseaseProneness": 4,
+    "diseaseNotes": "White mold, blackleg and clubroot. Wait 3 to 4 years between brassica crops.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "sunflower",
+        "soybean",
+        "dry-bean"
+      ]
+    },
+    "marketNotes": "Oilseed price follows world markets.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental",
+      "cold"
+    ]
   },
   {
     "id": "cotton",
     "name": "Cotton",
-    "localName": "Paruthi",
     "family": "Malvaceae",
-    "seasons": [
-      "Kharif"
-    ],
+    "role": "main",
     "durationDays": [
       150,
-      180
+      190
     ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1.15,
+      "end": 0.7
+    },
+    "cropCoefficientKc": 0.89,
+    "extraWaterMm": 0,
     "waterNeed": 4,
     "droughtTolerance": 3,
     "nFixing": 0,
@@ -362,32 +1024,43 @@
     "erosionCover": 2,
     "incomePotential": 4,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 0.9,
-    "extraWaterMm": 0,
-    "frostSensitivity": 3,
-    "diseaseProneness": 3,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 16,
+      "optMin": 22,
+      "optMax": 32,
+      "absMax": 38
+    },
+    "diseaseProneness": 4,
     "diseaseNotes": "Bollworm and whitefly; boll rot with late rain.",
     "rotationCompatibility": {
-      "avoidAfter": [
-        "cotton"
-      ]
+      "avoidAfter": []
     },
-    "marketNotes": "Price depends on mill demand and grade; check locally.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Price depends on mill demand and grade.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
   },
   {
     "id": "sesame",
-    "name": "Sesame (gingelly)",
-    "localName": "Ellu",
+    "name": "Sesame",
     "family": "Pedaliaceae",
-    "seasons": [
-      "Summer"
-    ],
+    "role": "main",
     "durationDays": [
       80,
-      90
+      110
     ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1.1,
+      "end": 0.25
+    },
+    "cropCoefficientKc": 0.81,
+    "extraWaterMm": 0,
     "waterNeed": 1,
     "droughtTolerance": 4,
     "nFixing": 0,
@@ -395,32 +1068,356 @@
     "erosionCover": 2,
     "incomePotential": 3,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 0.8,
-    "extraWaterMm": 0,
-    "frostSensitivity": 3,
-    "diseaseProneness": 2,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 18,
+      "optMin": 24,
+      "optMax": 33,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
     "diseaseNotes": "Phyllody and root rot; waterlogging kills seedlings.",
     "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Edible oil demand is steady; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry"
+    ]
+  },
+  {
+    "id": "safflower",
+    "name": "Safflower",
+    "family": "Asteraceae",
+    "role": "main",
+    "durationDays": [
+      100,
+      140
+    ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1.15,
+      "end": 0.25
+    },
+    "cropCoefficientKc": 0.84,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 5,
+    "erosionCover": 2,
+    "incomePotential": 2,
+    "heatThresholdC": 35,
+    "frostSensitivity": 2,
+    "tempRangeC": {
+      "absMin": 5,
+      "optMin": 15,
+      "optMax": 28,
+      "absMax": 35
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Root rot and rust in wet weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Small market; check local buyers.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "potato",
+    "name": "Potato",
+    "family": "Solanaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      130
+    ],
+    "kcStages": {
+      "ini": 0.5,
+      "mid": 1.15,
+      "end": 0.75
+    },
+    "cropCoefficientKc": 0.93,
+    "extraWaterMm": 0,
+    "waterNeed": 4,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 2,
+    "erosionCover": 3,
+    "incomePotential": 5,
+    "heatThresholdC": 30,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 7,
+      "optMin": 14,
+      "optMax": 20,
+      "absMax": 28
+    },
+    "diseaseProneness": 5,
+    "diseaseNotes": "Late blight, early blight and scab. Do not follow tomato or potato.",
+    "rotationCompatibility": {
       "avoidAfter": [
-        "sesame"
+        "tomato"
       ]
     },
-    "marketNotes": "Edible oil demand is steady; check local price.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Fresh and processing prices swing widely.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental",
+      "cold"
+    ]
+  },
+  {
+    "id": "tomato",
+    "name": "Tomato",
+    "family": "Solanaceae",
+    "role": "main",
+    "durationDays": [
+      100,
+      140
+    ],
+    "kcStages": {
+      "ini": 0.6,
+      "mid": 1.15,
+      "end": 0.8
+    },
+    "cropCoefficientKc": 0.96,
+    "extraWaterMm": 0,
+    "waterNeed": 4,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 3,
+    "incomePotential": 5,
+    "heatThresholdC": 32,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 12,
+      "optMin": 18,
+      "optMax": 27,
+      "absMax": 33
+    },
+    "diseaseProneness": 5,
+    "diseaseNotes": "Blight, wilt and viruses. Do not follow potato or tomato.",
+    "rotationCompatibility": {
+      "avoidAfter": [
+        "potato"
+      ]
+    },
+    "marketNotes": "Fresh-market prices swing widely.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "onion",
+    "name": "Onion",
+    "family": "Amaryllidaceae",
+    "role": "main",
+    "durationDays": [
+      100,
+      150
+    ],
+    "kcStages": {
+      "ini": 0.7,
+      "mid": 1.05,
+      "end": 0.75
+    },
+    "cropCoefficientKc": 0.92,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 1,
+    "nFixing": 0,
+    "rootDepth": 1,
+    "erosionCover": 1,
+    "incomePotential": 4,
+    "heatThresholdC": 32,
+    "frostSensitivity": 2,
+    "tempRangeC": {
+      "absMin": 7,
+      "optMin": 13,
+      "optMax": 24,
+      "absMax": 30
+    },
+    "diseaseProneness": 4,
+    "diseaseNotes": "Downy mildew and purple blotch in humid weather.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Prices swing widely between seasons.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "cabbage",
+    "name": "Cabbage",
+    "family": "Brassicaceae",
+    "role": "main",
+    "durationDays": [
+      90,
+      130
+    ],
+    "kcStages": {
+      "ini": 0.7,
+      "mid": 1.05,
+      "end": 0.95
+    },
+    "cropCoefficientKc": 0.94,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 2,
+    "nFixing": 0,
+    "rootDepth": 2,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 28,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 4,
+      "optMin": 12,
+      "optMax": 20,
+      "absMax": 28
+    },
+    "diseaseProneness": 4,
+    "diseaseNotes": "Clubroot, black rot and caterpillars. Wait several years between brassica crops.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Fresh-market prices swing widely.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "temperate",
+      "continental",
+      "cold"
+    ]
+  },
+  {
+    "id": "sweet-potato",
+    "name": "Sweet potato",
+    "family": "Convolvulaceae",
+    "role": "main",
+    "durationDays": [
+      100,
+      150
+    ],
+    "kcStages": {
+      "ini": 0.5,
+      "mid": 1.15,
+      "end": 0.65
+    },
+    "cropCoefficientKc": 0.92,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 3,
+    "nFixing": 0,
+    "rootDepth": 3,
+    "erosionCover": 5,
+    "incomePotential": 3,
+    "heatThresholdC": 35,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 14,
+      "optMin": 21,
+      "optMax": 28,
+      "absMax": 35
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Weevils and virus complex.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Mostly local markets.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "temperate"
+    ]
+  },
+  {
+    "id": "cassava",
+    "name": "Cassava",
+    "family": "Euphorbiaceae",
+    "role": "main",
+    "durationDays": [
+      240,
+      330
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 0.8,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.61,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 4,
+    "nFixing": 0,
+    "rootDepth": 4,
+    "erosionCover": 4,
+    "incomePotential": 3,
+    "heatThresholdC": 38,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 16,
+      "optMin": 24,
+      "optMax": 30,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Mosaic virus and bacterial blight.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Food and starch markets; check locally.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical"
+    ]
   },
   {
     "id": "sugarcane",
     "name": "Sugarcane",
-    "localName": "Karumbu",
     "family": "Poaceae",
-    "seasons": [
-      "Annual"
-    ],
+    "role": "main",
     "durationDays": [
       300,
-      360
+      365
     ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1.25,
+      "end": 0.75
+    },
+    "cropCoefficientKc": 0.97,
+    "extraWaterMm": 0,
     "waterNeed": 5,
     "droughtTolerance": 1,
     "nFixing": 0,
@@ -428,32 +1425,87 @@
     "erosionCover": 4,
     "incomePotential": 4,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 1,
-    "extraWaterMm": 0,
-    "frostSensitivity": 2,
-    "diseaseProneness": 2,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 16,
+      "optMin": 24,
+      "optMax": 32,
+      "absMax": 38
+    },
+    "diseaseProneness": 3,
     "diseaseNotes": "Red rot and borers; ratoon crops carry disease over.",
     "rotationCompatibility": {
-      "avoidAfter": [
-        "sugarcane"
-      ]
+      "avoidAfter": []
     },
-    "marketNotes": "Price is usually set with the sugar mill; check the current rate.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "marketNotes": "Usually sold to a mill at a set price.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "sugar-beet",
+    "name": "Sugar beet",
+    "family": "Amaranthaceae",
+    "role": "main",
+    "durationDays": [
+      140,
+      200
+    ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1.2,
+      "end": 0.7
+    },
+    "cropCoefficientKc": 0.92,
+    "extraWaterMm": 0,
+    "waterNeed": 3,
+    "droughtTolerance": 3,
+    "nFixing": 0,
+    "rootDepth": 4,
+    "erosionCover": 3,
+    "incomePotential": 3,
+    "heatThresholdC": 32,
+    "frostSensitivity": 2,
+    "tempRangeC": {
+      "absMin": 5,
+      "optMin": 14,
+      "optMax": 22,
+      "absMax": 30
+    },
+    "diseaseProneness": 3,
+    "diseaseNotes": "Cercospora leaf spot and rhizomania.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "Usually sold to a processor under contract.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
   },
   {
     "id": "sunn-hemp",
     "name": "Sunn hemp (green manure)",
-    "localName": "Sanal",
     "family": "Fabaceae",
-    "seasons": [
-      "Kharif"
-    ],
+    "role": "cover",
     "durationDays": [
       45,
-      60
+      70
     ],
+    "kcStages": {
+      "ini": 0.4,
+      "mid": 1,
+      "end": 0.5
+    },
+    "cropCoefficientKc": 0.79,
+    "extraWaterMm": 0,
     "waterNeed": 2,
     "droughtTolerance": 4,
     "nFixing": 5,
@@ -461,18 +1513,157 @@
     "erosionCover": 5,
     "incomePotential": 1,
     "heatThresholdC": 38,
-    "cropCoefficientKc": 0.8,
-    "extraWaterMm": 0,
-    "frostSensitivity": 1,
-    "diseaseProneness": 1,
-    "diseaseNotes": "Few serious pests; grown to be ploughed in, so there is no crop income.",
-    "rotationCompatibility": {
-      "avoidAfter": [
-        "sunn-hemp"
-      ]
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 16,
+      "optMin": 24,
+      "optMax": 32,
+      "absMax": 38
     },
-    "marketNotes": "No market: value comes from soil improvement.",
-    "source": "Starting estimate from the project brief (Tamil Nadu). Kc from FAO-56 Table 12 approximate seasonal mean. NOT yet verified against TNAU / ICAR / FAO: check before the demo.",
-    "verified": false
+    "diseaseProneness": 1,
+    "diseaseNotes": "Few serious pests. Grown to be ploughed in, so there is no crop income.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "No market: the value is soil improvement.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "dry",
+      "temperate"
+    ]
+  },
+  {
+    "id": "buckwheat-cover",
+    "name": "Buckwheat (cover crop)",
+    "family": "Polygonaceae",
+    "role": "cover",
+    "durationDays": [
+      60,
+      80
+    ],
+    "kcStages": {
+      "ini": 0.35,
+      "mid": 1,
+      "end": 0.35
+    },
+    "cropCoefficientKc": 0.76,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 2,
+    "nFixing": 0,
+    "rootDepth": 2,
+    "erosionCover": 4,
+    "incomePotential": 1,
+    "heatThresholdC": 30,
+    "frostSensitivity": 5,
+    "tempRangeC": {
+      "absMin": 8,
+      "optMin": 16,
+      "optMax": 26,
+      "absMax": 32
+    },
+    "diseaseProneness": 1,
+    "diseaseNotes": "Few pests; smothers weeds quickly.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "No market in this use: the value is soil cover.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "tropical",
+      "temperate",
+      "continental",
+      "cold"
+    ]
+  },
+  {
+    "id": "hairy-vetch",
+    "name": "Hairy vetch (winter cover)",
+    "family": "Fabaceae",
+    "role": "cover",
+    "durationDays": [
+      150,
+      210
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.74,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 3,
+    "nFixing": 5,
+    "rootDepth": 3,
+    "erosionCover": 5,
+    "incomePotential": 1,
+    "heatThresholdC": 28,
+    "frostSensitivity": 0,
+    "tempRangeC": {
+      "absMin": -2,
+      "optMin": 5,
+      "optMax": 20,
+      "absMax": 28
+    },
+    "diseaseProneness": 1,
+    "diseaseNotes": "Few pests; can become a weed in the next cereal.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "No market in this use: the value is nitrogen and soil cover.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "dry",
+      "temperate",
+      "continental"
+    ]
+  },
+  {
+    "id": "crimson-clover",
+    "name": "Crimson clover (cover crop)",
+    "family": "Fabaceae",
+    "role": "cover",
+    "durationDays": [
+      120,
+      180
+    ],
+    "kcStages": {
+      "ini": 0.3,
+      "mid": 1,
+      "end": 0.3
+    },
+    "cropCoefficientKc": 0.74,
+    "extraWaterMm": 0,
+    "waterNeed": 2,
+    "droughtTolerance": 2,
+    "nFixing": 5,
+    "rootDepth": 2,
+    "erosionCover": 5,
+    "incomePotential": 1,
+    "heatThresholdC": 30,
+    "frostSensitivity": 1,
+    "tempRangeC": {
+      "absMin": 2,
+      "optMin": 10,
+      "optMax": 22,
+      "absMax": 30
+    },
+    "diseaseProneness": 1,
+    "diseaseNotes": "Few pests.",
+    "rotationCompatibility": {
+      "avoidAfter": []
+    },
+    "marketNotes": "No market in this use: the value is nitrogen and soil cover.",
+    "source": "Kc from FAO-56 Table 12 (initial, mid, end values); temperature ranges in the style of FAO EcoCrop; durations from FAO-56 Table 11. Entered from the developer's recall, not machine-checked. 1-5 ratings are generic estimates. Verify against FAO, national extension services or local trials before relying on them.",
+    "verified": false,
+    "grownIn": [
+      "temperate",
+      "continental"
+    ]
   }
 ]

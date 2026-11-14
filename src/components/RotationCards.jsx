@@ -46,13 +46,13 @@ function Section({ title, items, render }) {
 }
 
 function Card({ card, total }) {
-  const order = ['water', 'income', 'soil', 'erosion', 'heat', 'pest']
+  const order = ['water', 'income', 'soil', 'erosion', 'heat', 'pest', 'climate']
   return (
     <article className={`card ${card.kind === 'baseline' ? 'baseline' : ''}`}>
       <header>
         <p className="kind">{card.kind === 'baseline' ? 'Your current rotation' : card.label}</p>
         <h3>{card.name}</h3>
-        <p className="crops">{card.items.map((it) => `${it.crop.name} (sow ${MONTH_NAMES[it.sowMonth - 1]})`).join(' then ')}</p>
+        <p className="crops">{card.items.map((it) => `${it.crop.name} (sow ${MONTH_NAMES[it.sowMonth - 1]}${card.items.some((x) => x.year > 0) ? `, year ${it.year + 1}` : ''})`).join(' then ')}</p>
         <p className="overall">
           <span className="big">{r0(card.overall)}</span>/100 overall <span className="rank">Rank {card.rank} of {total}</span>
         </p>
@@ -103,7 +103,7 @@ function Card({ card, total }) {
             <strong>{COMPONENT_LABELS[k]} ({r0(card.components[k].score)}):</strong> {card.components[k].formula}
           </p>
         ))}
-        <p className="formula">Overall = 0.8 x (your priority weights x water, income, soil and erosion scores) + 0.1 x heat and frost + 0.1 x pest and disease. Weights are in weights.json.</p>
+        <p className="formula">Overall = (0.8 x your priority weights x water, income, soil and erosion scores + 0.1 x heat and frost + 0.1 x pest and disease) x a temperature-fit factor (between 0.4 and 1, lower when a crop is far outside its comfortable temperature range). Weights are in weights.json.</p>
       </details>
       <details>
         <summary>Field cover through the year</summary>
@@ -124,7 +124,7 @@ export default function RotationCards({ result, priorities }) {
       <h2 id="rot-h">5. Rotation comparison</h2>
       <p className="disclaimer" role="note">{DISCLAIMER}</p>
       <p>Your current rotation is first. Scores are 0 to 100, based on your priorities (water {priorities.water}, income {priorities.income}, soil {priorities.soil}, erosion {priorities.erosion}) and on NASA climate data. A higher score is a better fit on paper, not a guarantee of yield or profit.</p>
-      {result.skipped.length > 0 && <p className="note">Not scored (climate record too short or invalid): {result.skipped.join(', ')}.</p>}
+      {result.skipped.length > 0 && <p className="note">No suitable rotation was found for: {result.skipped.join(', ')}. Crops in the table did not fit this climate for that strategy.</p>}
       <div className="cards">
         {result.cards.map((c) => (
           <Card card={c} total={result.cards.length} key={c.kind} />

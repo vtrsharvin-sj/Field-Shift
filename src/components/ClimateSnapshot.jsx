@@ -38,6 +38,11 @@ export default function ClimateSnapshot({ ctx, power }) {
         Source: {powerSourceLabel(meta)}. {Math.round(meta.completeness * 1000) / 10}% of daily values were usable.
         {meta.origin === 'prefetched-example' && <strong> This is a saved example, not a new download.</strong>}
       </p>
+      {ctx.climate && (
+        <p className="note">
+          Climate type at this point: <strong>{ctx.climate.label}</strong>. Average temperature {r1(ctx.climate.tAnn)} C, rainfall about {Math.round(ctx.climate.pAnn)} mm a year. {ctx.climate.text}
+        </p>
+      )}
       <div className="charts">
         <Chart title="Typical rainfall by month (mm)" data={monthly} line={`${wettest.name} is usually the wettest month (${wettest.rain} mm) and ${driest.name} the driest (${driest.rain} mm).`}>
           {(d) => (

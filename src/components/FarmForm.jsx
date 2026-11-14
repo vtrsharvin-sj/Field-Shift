@@ -5,11 +5,14 @@ import { MONTH_NAMES } from '../scoring/rotation.js'
 
 export const MAX_CUSTOM_CROPS = 3
 
-export function FarmForm({ farm, onChange, soilInfo, soilStatus }) {
-  const custom = farm.baselineId === 'custom'
+const isMatch = (r, zone) => zone && r.zones.includes(zone.group)
+
+export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone }) {
+  const matching = rotations.baselinePresets.filter((r) => isMatch(r, zone))
+  const others = rotations.baselinePresets.filter((r) => !isMatch(r, zone))
   const setSlot = (i, patch) => {
-    const slots = farm.customCrops.map((s, j) => (j === i ? { ...s, ...patch } : s))
-    onChange({ customCrops: slots })
+    const slots = farm.baselineCrops.map((s, j) => (j === i ? { ...s, ...patch } : s))
+    onChange({ baselineCrops: slots, presetId: 'custom' })
   }
   return (
     <section aria-labelledby="farm-h">
@@ -29,8 +32,8 @@ export function FarmForm({ farm, onChange, soilInfo, soilStatus }) {
           Water source
           <select value={farm.waterSource} onChange={(e) => onChange({ waterSource: e.target.value })}>
             <option value="rainfed">Rainfed (only rain)</option>
-            <option value="borewell">Borewell</option>
-            <option value="canal">Canal</option>
+            <option value="borewell">Well or borewell</option>
+            <option value="canal">Canal, river or irrigation scheme</option>
           </select>
         </label>
         <label>
@@ -49,45 +52,61 @@ export function FarmForm({ farm, onChange, soilInfo, soilStatus }) {
       </p>
       <label className="block">
         Your current rotation
-        <select value={farm.baselineId} onChange={(e) => onChange({ baselineId: e.target.value })}>
-          {rotations.baselinePresets.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-          <option value="custom">Build my own (up to 3 crops)</option>
+        <select value={farm.presetId} onChange={(e) => onPreset(e.target.value)}>
+          {zone && matching.length > 0 && (
+            <optgroup label={`Common in a ${zone.label.toLowerCase()} climate`}>
+              {matching.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label={zone && matching.length > 0 ? 'Other common rotations' : 'Common rotations'}>
+            {others.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </optgroup>
+          <option value="custom">Build my own</option>
         </select>
       </label>
-      {custom && (
-        <div className="custom">
-          {farm.customCrops.map((slot, i) => (
-            <div className="row" key={i}>
-              <label>
-                Crop {i + 1}
-                <select value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
-                  <option value="">(none)</option>
-                  {crops.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+      <p className="note">Pick up to 3 crops in the order you grow them. "Best for my climate" lets the tool choose the sowing month from the NASA temperature and rain record. Set your real month if you know it.</p>
+      <div className="custom">
+        {farm.baselineCrops.map((slot, i) => (
+          <div className="row" key={i}>
+            <label>
+              Crop {i + 1}
+              <select value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
+                <option value="">(none)</option>
+                {crops.filter((x) => x.role === 'main').map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+                <optgroup label="Cover crops and green manures">
+                  {crops.filter((x) => x.role === 'cover').map((x) => (
+                    <option key={x.id} value={x.id}>{x.name}</option>
                   ))}
-                </select>
-              </label>
-              <label>
-                Sowing month
-                <select value={slot.sowMonth} onChange={(e) => setSlot(i, { sowMonth: Number(e.target.value) })}>
-                  {MONTH_NAMES.map((m, k) => (
-                    <option key={m} value={k + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ))}
-          <p className="note">Crops cannot overlap in the field. If they do, you will see a message below.</p>
-        </div>
-      )}
+                </optgroup>
+              </select>
+            </label>
+            <label>
+              Year in cycle
+              <select value={slot.year ?? 0} onChange={(e) => setSlot(i, { year: Number(e.target.value) })} disabled={!slot.crop}>
+                <option value={0}>Year 1</option>
+                <option value={1}>Year 2 (alternate years)</option>
+                <option value={2}>Year 3</option>
+              </select>
+            </label>
+            <label>
+              Sowing month
+              <select value={slot.sowMonth} onChange={(e) => setSlot(i, { sowMonth: e.target.value === 'auto' ? 'auto' : Number(e.target.value) })} disabled={!slot.crop}>
+                <option value="auto">Best for my climate</option>
+                {MONTH_NAMES.map((m, k) => (
+                  <option key={m} value={k + 1}>{m}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ))}
+        <p className="note">Crops cannot overlap in the field. If they do, you will see a message with the results.</p>
+      </div>
     </section>
   )
 }

@@ -1,9 +1,12 @@
 // Scoring engine: climate context -> component scores -> weighted overall score. Pure and deterministic.
+// Component scores do not depend on the farmer's priorities, so they are cached; moving a slider only re-weights them.
 
-import { etSummary, landCoverInfo, lstSummary, ndviSummary, sourceAgreement } from '../indicators/satellite.js'
 import { annualTrends, heavyRainThreshold, indexDays, monthlyClimatology, seasonIndicators } from '../indicators/climate.js'
-import { erosionScore, heatScore, incomeScore, pestScore, soilScore, waterScore } from './components.js'
-import { resolveRotation, validateRotation } from './rotation.js'
+import { etSummary, landCoverInfo, lstSummary, ndviSummary, sourceAgreement } from '../indicators/satellite.js'
+import { classifyClimate } from '../indicators/zone.js'
+import { climateFitScore, erosionScore, heatScore, incomeScore, pestScore, soilScore, waterScore } from './components.js'
+import { midDuration, resolveRotation, validateRotation } from './rotation.js'
+import { rotationKey } from './names.js'
 
 /** Apply a what-if scenario to the real daily record: rain x factor, temperatures + offset. Returns the same days when no change. */
 export function applyScenario(days, { rainChangePct = 0, tempChangeC = 0 } = {}) {
@@ -18,7 +21,6 @@ export function applyScenario(days, { rainChangePct = 0, tempChangeC = 0 } = {})
   }))
 }
 
-/** Build everything the scoring needs from one POWER download. */
 /** Summaries of the optional NASA satellite layers. Any layer that is missing or failed stays null. */
 export function summarizeSatellite(raw, powerMonthly, w) {
   if (!raw) return null
@@ -35,6 +37,7 @@ export function summarizeSatellite(raw, powerMonthly, w) {
   }
 }
 
+/** Build everything the scoring needs from one POWER download. */
 export function buildContext({ power, farm, crops, soils, weights, scenario, satellite }) {
   const trends = annualTrends(power.days) // trends always use the real, unchanged record
   const days = applyScenario(power.days, scenario)
@@ -48,13 +51,31 @@ export function buildContext({ power, farm, crops, soils, weights, scenario, sat
   const seasonFor = (crop, sowMonth, durationDays) => {
     const key = `${crop.id}|${sowMonth}|${durationDays}`
     if (!seasonCache.has(key)) {
-      seasonCache.set(key, seasonIndicators(days, index, { lat, sowMonth, durationDays, kc: crop.cropCoefficientKc, heatThresholdC: crop.heatThresholdC, heavyMm }))
+      const s = seasonIndicators(days, index, { lat, sowMonth, durationDays, kc: crop.cropCoefficientKc, heatThresholdC: crop.heatThresholdC, heavyMm, baseT: crop.tempRangeC.absMin, killC: weights.heat.frostKillByTolerance[crop.frostSensitivity] })
+      // A crop that needs more than a year to collect its growing days cannot be used in a yearly cycle.
+      seasonCache.set(key, s && s.lengthMean <= 365 ? s : null)
     }
     return seasonCache.get(key)
   }
   const active = scenario && (scenario.rainChangePct || scenario.tempChangeC)
   const realMonthly = active ? monthlyClimatology(power.days, { lat, heavyMm: heavyRainThreshold(power.days) }) : monthly
-  return { power, farm, weights, soil, cropsById, trends, monthly, heavyMm, lat, seasonFor, scenario: scenario ?? {}, satellite: summarizeSatellite(satellite, realMonthly, weights) }
+  return {
+    power,
+    farm,
+    weights,
+    soil,
+    crops,
+    cropsById,
+    trends,
+    monthly,
+    heavyMm,
+    lat,
+    seasonFor,
+    scenario: scenario ?? {},
+    climate: classifyClimate(realMonthly, lat),
+    satellite: summarizeSatellite(satellite, realMonthly, weights),
+    scoreCache: new Map(),
+  }
 }
 
 /** Convert slider values (0 to 10) into weights that sum to 1. All zero means equal weights. */
@@ -64,45 +85,60 @@ export function normalizePriorities(p) {
   return Object.fromEntries(keys.map((k) => [k, total ? Math.max(0, Number(p[k]) || 0) / total : 0.25]))
 }
 
+/** Weighted overall score, multiplied by the temperature-fit gate (see weights.json). */
 export function overallScore(c, priorities, w) {
   const pw = normalizePriorities(priorities)
   const priorityPart = pw.water * c.water.score + pw.income * c.income.score + pw.soil * c.soil.score + pw.erosion * c.erosion.score
-  const overall = w.overall.priorityShare * priorityPart + w.overall.heatShare * c.heat.score + w.overall.pestShare * c.pest.score
-  return { overall, priorityWeights: pw }
+  const base = w.overall.priorityShare * priorityPart + w.overall.heatShare * c.heat.score + w.overall.pestShare * c.pest.score
+  const lowest = c.climate ? c.climate.lowest : 100
+  const floor = w.climateFit?.floor ?? 1
+  const gate = floor + (1 - floor) * (lowest / 100)
+  return { overall: base * gate, base, gate, priorityWeights: pw }
 }
 
-/** Evaluate one rotation. Returns { error } if the rotation is invalid or no full season fits in the data. */
-export function evaluateRotation(rotation, ctx, priorities) {
-  let items
+/** Priority-independent part: component scores for one rotation (cached by crops and sowing months). */
+export function scoreRotation(rotation, ctx) {
+  const key = rotationKey(rotation)
+  if (ctx.scoreCache.has(key)) return ctx.scoreCache.get(key)
+  let result
   try {
-    items = resolveRotation(rotation, ctx.cropsById)
+    const base = resolveRotation(rotation, ctx.cropsById)
+    const order = base.map((it, i) => i).sort((a, b) => base[a].year - base[b].year || base[a].sowMonth - base[b].sowMonth)
+    const sorted = order.map((i) => base[i])
+    const seasons = sorted.map((it) => ctx.seasonFor(it.crop, it.sowMonth, midDuration(it.crop)))
+    if (seasons.some((s) => !s)) result = { error: 'One of these crops cannot finish a season from its sowing month at this location (too cold, or the record is too short).' }
+    else {
+      const items = sorted.map((it, i) => ({ ...it, durationDays: Math.min(365, Math.round(seasons[i].lengthMean)) }))
+      const problems = validateRotation(items)
+      if (problems.length) result = { error: problems.join(' ') }
+      else {
+        const w = ctx.weights
+        result = {
+          rotation,
+          items,
+          seasons,
+          components: {
+            water: waterScore(items, seasons, ctx.farm, w, ctx.soil),
+            heat: heatScore(items, seasons, w),
+            soil: soilScore(items, w),
+            erosion: erosionScore(items, ctx.monthly, w, ctx.satellite?.slope ?? null),
+            income: incomeScore(items, w),
+            pest: pestScore(items, seasons, w),
+            climate: climateFitScore(items, seasons, w),
+          },
+        }
+      }
+    }
   } catch (e) {
-    return { error: e.message }
+    result = { error: e.message }
   }
-  const problems = validateRotation(items)
-  if (problems.length) return { error: problems.join(' ') }
-  const seasons = items.map((it) => ctx.seasonFor(it.crop, it.sowMonth, it.durationDays))
-  if (seasons.some((s) => !s)) return { error: 'The climate record is too short for one of the crop seasons.' }
-  const w = ctx.weights
-  const components = {
-    water: waterScore(items, seasons, ctx.farm, w, ctx.soil),
-    heat: heatScore(items, seasons, w),
-    soil: soilScore(items, w),
-    erosion: erosionScore(items, ctx.monthly, w, ctx.satellite?.slope ?? null),
-    income: incomeScore(items, w),
-    pest: pestScore(items, seasons, w),
-  }
-  const { overall, priorityWeights } = overallScore(components, priorities, w)
-  return { rotation, items, seasons, components, overall, priorityWeights }
+  ctx.scoreCache.set(key, result)
+  return result
 }
 
-/** Evaluate the baseline plus the best candidate of each strategy for the farmer's priorities. */
-export function compareStrategies({ baseline, strategies, ctx, priorities }) {
-  const base = evaluateRotation(baseline, ctx, priorities)
-  const alternatives = strategies.map((s) => {
-    const variants = s.candidates.map((c) => evaluateRotation(c, ctx, priorities)).filter((v) => !v.error)
-    variants.sort((a, b) => b.overall - a.overall)
-    return { strategy: s, best: variants[0] ?? null, variants }
-  })
-  return { baseline: base, alternatives }
+/** Evaluate one rotation for the given priorities. Returns { error } if it is invalid or no full season fits in the data. */
+export function evaluateRotation(rotation, ctx, priorities) {
+  const scored = scoreRotation(rotation, ctx)
+  if (scored.error) return scored
+  return { ...scored, ...overallScore(scored.components, priorities, ctx.weights) }
 }

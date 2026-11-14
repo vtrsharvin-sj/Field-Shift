@@ -2,7 +2,7 @@
 // Every threshold comes from weights.json (passed in as `w`). No hidden constants.
 
 import { clamp, mean, sum } from '../indicators/stats.js'
-import { bareFractionByMonth, totalCropDays } from './rotation.js'
+import { bareFractionByMonth, totalCropDays, yearTotals } from './rotation.js'
 
 const weightedMean = (values, weights) => {
   const tw = sum(weights)
@@ -14,11 +14,12 @@ export function cropPairs(items) {
   return items.map((it, i) => [it.crop, items[(i + 1) % items.length].crop])
 }
 
-export function waterScore(items, seasons, farm, w, soil) {
-  const total = totalCropDays(items)
+export function waterScore(items, seasons, farm, w, soil, totalDays = null) {
+  const perYear = yearTotals(items)
   const annual = w.waterSourceAllowanceMmPerYear[farm.waterSource]?.[farm.waterAvailability] ?? 0
   const rows = items.map((it, i) => {
     const s = seasons[i]
+    const total = totalDays ?? perYear[it.year ?? 0]
     const allowance = total ? (annual * it.durationDays) / total : 0
     const demand = it.crop.cropCoefficientKc * s.et0Mean + it.crop.extraWaterMm
     const effRain = s.rainMean * soil.rainEfficiency
@@ -107,4 +108,38 @@ export function pestScore(items, seasons, w) {
     }),
   )
   return { score: clamp(100 - repeat - humidity), repeat, humidity, formula: `Pest and disease safety = 100 - penalty for the same crop (${w.pest.sameCropRepeatPenalty}), same family (${w.pest.sameFamilyRepeatPenalty}) or a listed bad follow-on crop (${w.pest.avoidAfterPenalty}) back to back - humidity penalty for disease-prone crops when average humidity is above ${w.pest.humidityStartPct}%.` }
+}
+
+/** Trapezoid fit (0 to 100): 100 inside the optimum range, falling linearly to 0 at the absolute limits. */
+export function temperatureFit(tMean, r) {
+  if (tMean == null) return null
+  if (tMean >= r.optMin && tMean <= r.optMax) return 100
+  if (tMean < r.optMin) return tMean <= r.absMin ? 0 : (100 * (tMean - r.absMin)) / (r.optMin - r.absMin)
+  return tMean >= r.absMax ? 0 : (100 * (r.absMax - tMean)) / (r.absMax - r.optMax)
+}
+
+/**
+ * How well a crop's season suits the location (0 to 100): the lowest of
+ * - temperature fit of the growing-season average,
+ * - sowing fit (is it warm enough, in the first two weeks, to sow?),
+ * - survival fit (share of years without a night colder than the crop can survive).
+ */
+export function seasonTempFit(crop, season, w) {
+  const r = crop.tempRangeC
+  const tempFit = temperatureFit(season.tmeanMean, r)
+  const sowRange = { absMin: r.absMin, optMin: r.absMin + (r.optMin - r.absMin) * (w.climateFit?.sowTempShareOfRange ?? 0.5), optMax: r.optMax, absMax: r.absMax }
+  const sowFit = temperatureFit(season.sowTempMean, sowRange)
+  const survivalFit = 100 * (1 - season.killShare)
+  return { fit: Math.min(tempFit, sowFit, survivalFit), tempFit, sowFit, survivalFit }
+}
+
+export function climateFitScore(items, seasons, w) {
+  const rows = items.map((it, i) => {
+    const s = seasons[i]
+    const f = seasonTempFit(it.crop, s, w)
+    return { crop: it.crop.name, tMean: s.tmeanMean, sowTemp: s.sowTempMean, coldestNight: s.coldestNightMean, range: it.crop.tempRangeC, ...f }
+  })
+  const score = weightedMean(rows.map((r) => r.fit), items.map((it) => it.durationDays))
+  const lowest = Math.min(...rows.map((r) => r.fit))
+  return { score, lowest, rows, formula: 'Temperature fit = the lowest of three checks, each 0 to 100: (1) average temperature of the growing days inside the crop\'s comfortable range (FAO EcoCrop-style ranges in crops.json), falling to 0 at its absolute limits; (2) warm enough to sow in the first two weeks; (3) share of years without a night colder than the crop survives. The overall score is multiplied by a factor that shrinks when any crop fails a check.' }
 }

@@ -3,7 +3,8 @@
   "overall": {
     "priorityShare": 0.8,
     "heatShare": 0.1,
-    "pestShare": 0.1
+    "pestShare": 0.1,
+    "climateGateNote": "overall = weighted score x (floor + (1 - floor) x lowest temperature fit / 100), so a rotation with a crop far outside its temperature range cannot score well."
   },
   "waterSourceAllowanceMmPerYear": {
     "rainfed": {
@@ -38,7 +39,16 @@
   "heat": {
     "toleratedHeatShare": 0.05,
     "fullPenaltyHeatShare": 0.3,
-    "frostPenaltyPerNight": 10
+    "frostPenaltyPerNight": 10,
+    "frostKillByTolerance": {
+      "0": -20,
+      "1": -8,
+      "2": -4,
+      "3": -1.5,
+      "4": 0,
+      "5": 1
+    },
+    "frostKillNote": "Coldest-night temperature (C) that kills a crop, by the crop frostSensitivity rating (0 = winter hardy, 5 = very tender). Rough estimates."
   },
   "soil": {
     "base": 30,
@@ -115,5 +125,24 @@
         "penalty": 25
       }
     ]
+  },
+  "climateFit": {
+    "floor": 0.4,
+    "minOptionTempFit": 70,
+    "minOptionQuality": 55,
+    "sowTempShareOfRange": 0.5
+  },
+  "planner": {
+    "optionsPerCrop": 2,
+    "maxOptions": 22,
+    "coverOptions": 4,
+    "maxCropsPerRotation": 3,
+    "optionQualityShares": {
+      "temp": 0.4,
+      "water": 0.3,
+      "heat": 0.3
+    },
+    "variantsShown": 4,
+    "screeningCropDays": 240
   }
 }
