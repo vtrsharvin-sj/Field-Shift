@@ -14,7 +14,14 @@ function ClickHandler({ onPick }) {
 function Recenter({ lat, lon, places, flyTo }) {
   const map = useMap()
   useEffect(() => {
-    if (places.length > 1) map.fitBounds(places.map((p) => [p.lat, p.lon]), { padding: [30, 30], maxZoom: 14 })
+    if (places.length === 1) map.setView([places[0].lat, places[0].lon], 14)
+    else if (places.length > 1) {
+      const matches = places.slice(0, 5)
+      const latSpan = Math.max(...matches.map((p) => p.lat)) - Math.min(...matches.map((p) => p.lat))
+      const lonSpan = Math.max(...matches.map((p) => p.lon)) - Math.min(...matches.map((p) => p.lon))
+      if (latSpan > 5 || lonSpan > 5) map.setView([matches[0].lat, matches[0].lon], 13)
+      else map.fitBounds(matches.map((p) => [p.lat, p.lon]), { padding: [30, 30], maxZoom: 14 })
+    }
     else if (Number.isFinite(lat) && Number.isFinite(lon)) map.setView([lat, lon], flyTo ? flyTo.zoom : Math.max(map.getZoom(), 7))
   }, [lat, lon, places, flyTo, map])
   return null
@@ -47,9 +54,21 @@ export default function LocationPicker({ farm, onChange }) {
     setBusy(true)
     setMsg('Searching...')
     try {
-      const found = await searchPlaces(query, { near: valid ? { lat, lon } : null })
+      const googleIssues = []
+      const found = await searchPlaces(query, {
+        near: valid ? { lat, lon } : null,
+        report: (service, reason) => googleIssues.push(`${service}: ${String(reason).slice(0, 90)}`),
+      })
       setPlaces(found)
-      setMsg(found.length ? `${found.length} place${found.length === 1 ? '' : 's'} found. Choose one below or tap a marker on the map.` : 'No place found. Try a different spelling, add the district or country, or tap the map.')
+      const sources = [...new Set(found.map((p) => p.source).filter(Boolean))]
+      const googleHint = GOOGLE_KEY && googleIssues.length
+        ? ` Google API issue (${googleIssues.join('; ')}). Check Places API (New), Geocoding API, billing and key restrictions.`
+        : GOOGLE_KEY && !sources.includes('Google')
+          ? ' Google returned no matches; check Places API (New), billing and key restrictions.'
+          : ''
+      setMsg(found.length
+        ? `${found.length} place${found.length === 1 ? '' : 's'} found${sources.length ? ` from ${sources.join(', ')}` : ''}. Choose one below or tap a marker on the map.${googleHint}`
+        : `No place found. Try a different spelling, add the district or country, or tap the map.${GOOGLE_KEY ? ' Google returned no matches; check Places API (New), billing and key restrictions.' : ''}`)
     } catch (err) {
       setMsg(`Search failed: ${err.message} You can still tap the map.`)
     } finally {
@@ -84,7 +103,7 @@ export default function LocationPicker({ farm, onChange }) {
       <h2 id="loc-h">Where is your farm?</h2>
       <p className="lead">Start typing a village, town, farm, shop, temple, college or any landmark and pick a suggestion, tap the map (landmarks are labelled), or use your location. This works anywhere on land.</p>
       <div className="searchrow" role="search">
-        <PlaceSearch value={query} onValueChange={(v) => { setQuery(v); setPlaces([]) }} near={valid ? { lat, lon } : null} onChoose={choose} onSearchAll={search} onLocate={locate} busy={busy} />
+        <PlaceSearch value={query} onValueChange={(v) => { setQuery(v); setPlaces([]) }} near={valid ? { lat, lon } : null} googleEnabled={useGoogle} onChoose={choose} onSearchAll={search} onLocate={locate} busy={busy} />
         <button type="button" className="secondary" onClick={search} disabled={busy}>{busy ? 'Searching...' : 'Search all sources'}</button>
       </div>
       <p className="hint"><button type="button" className="link" onClick={locate}>Use my current location</button></p>

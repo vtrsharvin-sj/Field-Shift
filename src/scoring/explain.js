@@ -58,8 +58,8 @@ function globalGaps(ctx, soilInfo) {
   if (sat?.lst) gaps.push(`Ground temperature (MODIS, 1 km) covers ${sat.lst.years.join(', ')} only and is a mixed pixel, not your field. The hot-ground threshold (${ctx.weights.satellite.lstHotC} C) is a generic estimate.`)
   else gaps.push(`Ground temperature (MODIS land surface temperature) was not loaded${err.lst ? ` (${err.lst})` : ''}.`)
   if (!sat?.landCover) gaps.push(`Cropland check (MODIS land cover) was not loaded${err.landCover ? ` (${err.landCover})` : ''}.`)
-  gaps.push('Satellite rainfall (GPM) and soil moisture (SMAP) are not integrated: both need a NASA Earthdata login, which a static site cannot hold safely. POWER rain already uses satellite rainfall inside its model, but it was not cross-checked against a second source.')
-  gaps.push('Regional groundwater trend (GRACE) is not integrated (needs Earthdata login, and its resolution of about 300 km is too coarse for a field). Borewell reliability is taken from the availability level you chose.')
+  gaps.push('NASA GPM IMERG, SMAP and GRACE/GRACE-FO map imagery is available in Data used as public regional context. The displayed map colors are not sampled into numeric point readings or used in rotation scores; GRACE measures total water-storage change, not an individual well.')
+  gaps.push('Market prices and lab soil-test values can be recorded in Data used for this location, but remain farmer-entered context and do not alter the screening scores or turn them into a profit forecast.')
   if (sat?.agreement && !sat.agreement.agrees) gaps.push(`MODIS potential ET and the POWER-based ET0 disagree (${sat.agreement.pctDiff.toFixed(0)}% difference, correlation ${sat.agreement.r?.toFixed(2)}). Water results are less certain.`)
   const m = ctx.power.meta
   if (m.missingParams.length) gaps.push(`NASA POWER did not provide: ${m.missingParams.join(', ')}. Indicators that need them were left out.`)
@@ -217,7 +217,7 @@ function confidenceFor(ev, cards, ctx, unknownCount) {
   const m = ctx.power.meta
   const reasons = []
   let issues = 0
-  const years = m.endYear - m.startYear + 1
+  const years = ctx.trends?.rows?.length ?? Math.max(0, m.endYear - m.startYear + 1)
   if (m.completeness < w.minCompleteness) { issues += 1; reasons.push(`Only ${Math.round(m.completeness * 100)}% of daily NASA values were usable.`) }
   else reasons.push(`${Math.round(m.completeness * 1000) / 10}% of daily NASA values were usable.`)
   if (years < w.goodYears) { issues += 1; reasons.push(`The climate record is ${years} years, short for judging year-to-year variation.`) }

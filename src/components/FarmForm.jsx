@@ -7,15 +7,17 @@ export const MAX_CUSTOM_CROPS = 3
 
 const isMatch = (r, zone) => zone && r.zones.includes(zone.group)
 
-export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone, local = null, localStatus = 'idle', compact = false }) {
+export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone, local = null, localStatus = 'idle', globalCalendar = null, calendarStatus = 'idle', compact = false }) {
   const known = (id) => (local?.available ? local.crops[id]?.score ?? 0 : 0)
-  const localPresets = local?.available ? rotations.baselinePresets.filter((r) => r.crops.every((id) => known(id) >= 80)) : []
-  const rest = rotations.baselinePresets.filter((r) => !localPresets.includes(r))
+  const eligiblePresets = rotations.baselinePresets.filter((r) => r.crops.length >= 2)
+  const localPresets = local?.available ? eligiblePresets.filter((r) => r.crops.every((id) => known(id) >= 80)) : []
+  const rest = eligiblePresets.filter((r) => !localPresets.includes(r))
   const matching = rest.filter((r) => isMatch(r, zone))
   const others = rest.filter((r) => !isMatch(r, zone))
   const mainCrops = crops.filter((x) => x.role === 'main')
-  const nearCrops = local?.available ? mainCrops.filter((x) => known(x.id) >= 80).sort((a, b) => known(b.id) - known(a.id) || a.name.localeCompare(b.name)) : []
-  const otherCrops = mainCrops.filter((x) => !nearCrops.includes(x))
+  const calendarCrops = mainCrops.filter((x) => globalCalendar?.calendars?.[x.id]?.length)
+  const nearCrops = local?.available ? mainCrops.filter((x) => known(x.id) >= 80 && !calendarCrops.includes(x)).sort((a, b) => known(b.id) - known(a.id) || a.name.localeCompare(b.name)) : []
+  const otherCrops = mainCrops.filter((x) => !nearCrops.includes(x) && !calendarCrops.includes(x))
   const setSlot = (i, patch) => {
     const slots = farm.baselineCrops.map((s, j) => (j === i ? { ...s, ...patch } : s))
     onChange({ baselineCrops: slots, presetId: 'custom' })
@@ -76,10 +78,15 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
         {localStatus === 'ok' && local?.available && `The lists below put crops known around ${local.place.label || 'your farm'} first (from Wikipedia articles about your area).`}
         {localStatus === 'ok' && !local?.available && 'Nothing was found about local crops, so the lists are in the usual order.'}
       </p>
+      <p className="hint" aria-live="polite">
+        {calendarStatus === 'loading' && 'Loading a global historical crop-calendar reference for this location...'}
+        {calendarStatus === 'ok' && `Global crop calendar${globalCalendar?.cell ? `: nearest 0.5° grid cell is ${globalCalendar.cell.distanceKm} km away` : ''}. Coverage varies by crop; this is regional context, not a field-level recommendation.`}
+        {calendarStatus === 'error' && 'Global crop-calendar data is unavailable; the tool will use its climate-based month estimate.'}
+      </p>
       <label className="block">
         Start from a common rotation
         <select value={farm.presetId} onChange={(e) => onPreset(e.target.value)}>
-          <option value="">Choose a common rotation...</option>
+          <option value="">Choose a 2-crop rotation...</option>
           {localPresets.length > 0 && (
             <optgroup label={`Grown around ${local.place.city || local.place.locality || 'your farm'}`}>
               {localPresets.map((r) => (
@@ -99,16 +106,22 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}
           </optgroup>
-          <option value="custom">Something else (set it below)</option>
+          <option value="custom">Choose both crops myself</option>
         </select>
       </label>
+      <p className="hint">Choose both crops in the rotation. A common rotation fills them in for you, and you can change either crop below. The third crop is optional.</p>
       <div className="slots">
         {farm.baselineCrops.map((slot, i) => (
           <div className="slot" key={i}>
             <label>
-              Crop {i + 1}
-              <select value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
+              Crop {i + 1}{i < 2 ? ' (required)' : ' (optional)'}
+              <select aria-required={i < 2} value={slot.crop} onChange={(e) => setSlot(i, { crop: e.target.value })}>
                 <option value="">(none)</option>
+                {calendarCrops.length > 0 && (
+                  <optgroup label="Global crop calendar available at this point (AgMIP-GGCMI)">
+                    {calendarCrops.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </optgroup>
+                )}
                 {nearCrops.length > 0 && (
                   <optgroup label={`Known near ${local.place.city || local.place.locality || 'your farm'}`}>
                     {nearCrops.map((x) => (
@@ -126,6 +139,26 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
                 </optgroup>
               </select>
             </label>
+            {slot.crop && (() => {
+              const windows = globalCalendar?.calendars?.[slot.crop] ?? []
+              const system = farm.waterSource === 'rainfed' ? 'rf' : 'ir'
+              const bySystem = windows.filter((w) => w.system === system)
+              const references = bySystem.length ? bySystem : windows
+              if (!references.length) return null
+              return (
+                <div className="calendar-reference" aria-label={`Global calendar reference for ${crops.find((crop) => crop.id === slot.crop)?.name ?? slot.crop}`}>
+                  <small>Global {references[0].system === 'rf' ? 'rainfed' : 'irrigated'} reference; 0.5° historical calendar:</small>
+                  {references.map((window) => {
+                    const month = MONTH_NAMES[window.plantingMonth - 1]
+                    return (
+                      <button className="link" type="button" key={`${window.cropCode}-${window.system}`} onClick={() => setSlot(i, { sowMonth: window.plantingMonth })}>
+                        Use {month} start{references.length > 1 ? ` · ${window.season}` : ''} (~{window.seasonDays} days)
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })()}
             <label>
               Which year?
               <select value={slot.year ?? 0} onChange={(e) => setSlot(i, { year: Number(e.target.value) })} disabled={!slot.crop}>
@@ -146,7 +179,7 @@ export function FarmForm({ farm, onChange, onPreset, soilInfo, soilStatus, zone,
           </div>
         ))}
       </div>
-      <p className="hint">List up to 3 crops in the order you grow them. If you know your real sowing month, set it. Otherwise the tool picks the best month from the NASA temperature and rain record.</p>
+      <p className="hint">Set the crops in the order you grow them. If you know a real sowing month, choose it; otherwise the tool estimates the month from the NASA temperature and rain record.</p>
     </section>
   )
 }

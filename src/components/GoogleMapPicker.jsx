@@ -12,7 +12,7 @@ export function loadGoogleMaps(key) {
   loader = new Promise((resolve, reject) => {
     window.gm_authFailure = () => reject(new Error('Google rejected the API key (check that Maps JavaScript API is enabled and the key allows this website).'))
     const s = document.createElement('script')
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&callback=__gmapsReady`
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&callback=__gmapsReady`
     s.async = true
     s.onerror = () => reject(new Error('Could not load Google Maps.'))
     window.__gmapsReady = () => resolve(window.google.maps)
@@ -86,9 +86,22 @@ export default function GoogleMapPicker({ lat, lon, valid, places = [], flyTo = 
       m.addListener('click', () => onPickPlace?.(p))
       return m
     })
-    if (places.length > 1) {
+    if (places.length === 1) {
+      map.current.panTo({ lat: places[0].lat, lng: places[0].lon })
+      map.current.setZoom(14)
+    } else if (places.length > 1) {
+      const matches = places.slice(0, 5)
+      const latitudes = matches.map((p) => p.lat)
+      const longitudes = matches.map((p) => p.lon)
+      const latSpan = Math.max(...latitudes) - Math.min(...latitudes)
+      const lonSpan = Math.max(...longitudes) - Math.min(...longitudes)
+      if (latSpan > 5 || lonSpan > 5) {
+        map.current.panTo({ lat: matches[0].lat, lng: matches[0].lon })
+        map.current.setZoom(13)
+        return
+      }
       const b = new maps.LatLngBounds()
-      places.forEach((p) => b.extend({ lat: p.lat, lng: p.lon }))
+      matches.forEach((p) => b.extend({ lat: p.lat, lng: p.lon }))
       map.current.fitBounds(b, 40)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

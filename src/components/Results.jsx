@@ -58,7 +58,7 @@ const TABS = [
   ['learn', 'Learn'],
 ]
 
-export default function Results({ ctx, result, power, farm, onFarm, onPreset, priorities, onPriorities, scenario, setScenario, soil, local, sat, onLoadSat, onChangeLocation, onPrint }) {
+export default function Results({ ctx, result, power, farm, onFarm, onPreset, priorities, onPriorities, scenario, setScenario, soil, local, calendar, sat, onLoadSat, onChangeLocation, onPrint }) {
   const [tab, setTab] = useState('recs')
   const [sideOpen, setSideOpen] = useState(() => !(typeof window !== 'undefined' && window.matchMedia?.('(max-width: 860px)').matches))
   const soilLabel = farm.soilType
@@ -66,7 +66,7 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
     <div className="results">
       <aside className={`side ${sideOpen ? 'open' : ''}`} aria-label="Your choices">
         <button type="button" className="side-toggle" onClick={() => setSideOpen(!sideOpen)} aria-expanded={sideOpen}>
-          {sideOpen ? 'Hide your choices' : 'Change your choices'}
+          {sideOpen ? 'Hide farm details and data' : 'Farm details and data'}
         </button>
         <div className="side-body">
           <div className="panel">
@@ -85,10 +85,10 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
           <div className="panel">
             <Priorities priorities={priorities} onChange={onPriorities} compact />
           </div>
-          <DataStatus ctx={ctx} power={power} soil={soil} sat={sat} local={local} />
+          <DataStatus ctx={ctx} power={power} soil={soil} sat={sat} local={local} calendar={calendar} farm={farm} />
           <details className="panel">
             <summary>Edit soil, water and current rotation</summary>
-            <FarmForm farm={farm} onChange={onFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx.climate} local={local.data} localStatus={local.status} compact />
+            <FarmForm farm={farm} onChange={onFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx.climate} local={local.data} localStatus={local.status} globalCalendar={calendar?.data} calendarStatus={calendar?.status} compact />
           </details>
         </div>
       </aside>
@@ -105,6 +105,12 @@ export default function Results({ ctx, result, power, farm, onFarm, onPreset, pr
           </p>
         )}
         <Summary result={result} />
+        {ctx.satellite?.landCover && !ctx.satellite.landCover.isCropland && (
+          <aside className="location-alert" role="note" aria-label="Location data check">
+            <strong>Check this point before using the comparison.</strong>
+            <span> MODIS classifies the selected 500 m pixel as {ctx.satellite.landCover.name}, not cropland. It may include mixed land cover, so these scores are regional screening only—not verified for your field. Choose a field-centre point and confirm it with local knowledge.</span>
+          </aside>
+        )}
         <div className="tabs" role="tablist" aria-label="Result sections">
           {TABS.map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>

@@ -15,11 +15,11 @@ export const GLOSSARY = {
   },
   soilMoistureAnomaly: {
     term: 'Soil moisture anomaly',
-    text: 'How much wetter or drier the soil is than usual for that time of year. Not used in this version (SMAP is not integrated).',
+    text: 'How much wetter or drier the soil is than usual for that time of year. NASA SMAP map context is now available, but its pixels are not turned into field-level point values or used in the rotation score.',
   },
   ndvi: {
     term: 'NDVI',
-    text: 'A satellite greenness index. Low values in a growing season can mean crop stress or bare soil. Not used in this version.',
+    text: 'A satellite greenness index. Low values can mean sparse vegetation or bare soil, but can also reflect mixed land cover or seasonality. Optional recent MODIS NDVI is shown as context, not a crop-specific stress measurement.',
   },
   frostRisk: {
     term: 'Frost risk',

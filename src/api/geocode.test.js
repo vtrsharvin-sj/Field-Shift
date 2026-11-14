@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { googleMapsLink, mergePlaces, parseCoordinates, parseNominatim, parsePhoton, parsePlaces, parseWikipediaPlaces, relevantTo, searchPlaces, suggestPlaces } from './geocode.js'
+import { googleMapsLink, mergePlaces, parseCoordinates, parseNominatim, parsePhoton, parsePlaces, parseWikipediaPlaces, relevantTo, searchPlaces, suggestGooglePlaces, suggestPlaces } from './geocode.js'
 
 describe('parseCoordinates', () => {
   it('reads plain pairs', () => {
@@ -60,6 +60,31 @@ describe('place name search', () => {
 })
 
 describe('landmark search sources', () => {
+  it('uses Google Places autocomplete and carries its session token into the selected prediction', async () => {
+    const token = { id: 'session' }
+    let request
+    const prediction = { text: { toString: () => 'Brookefields Mall, Coimbatore' }, types: ['shopping_mall'], toPlace: () => ({}) }
+    const g = {
+      maps: {
+        importLibrary: async () => ({
+          AutocompleteSessionToken: class { constructor() { return token } },
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions: async (r) => {
+              request = r
+              return { suggestions: [{ placePrediction: prediction }, { queryPrediction: {} }] }
+            },
+          },
+        }),
+      },
+    }
+    const r = await suggestGooglePlaces('Brookefields', g, null, { lat: 11, lon: 77 })
+    expect(request).toMatchObject({ input: 'Brookefields', sessionToken: token, origin: { lat: 11, lng: 77 } })
+    expect(r.sessionToken).toBe(token)
+    expect(r.places).toEqual([{ name: 'Brookefields Mall, Coimbatore', kind: 'shopping_mall', source: 'Google', googlePrediction: prediction }])
+    await suggestGooglePlaces('Brookefields Mall', g, token)
+    expect(request.sessionToken).toBe(token)
+  })
+
   it('parses Photon results: shops, malls, temples with kind and place', () => {
     const p = parsePhoton({ features: [{ geometry: { coordinates: [76.96, 11.01] }, properties: { name: 'Brookefields Mall', osm_value: 'mall', city: 'Coimbatore', state: 'Tamil Nadu', country: 'India' } }, { geometry: { coordinates: ['x', 'y'] }, properties: { name: 'bad' } }] })
     expect(p).toHaveLength(1)

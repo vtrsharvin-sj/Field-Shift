@@ -1,4 +1,4 @@
-/* Crop Rotation Helper: design system.
+/* FieldShift: design system.
    Meaning is never carried by colour alone: every status also has a text label. */
 :root {
   --ink: #17202a;
@@ -73,6 +73,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 1rem; min-height: 70vh; }
 /* hero */
 .hero { padding: clamp(1.2rem, 4vw, 3rem); margin-top: 1rem; background: linear-gradient(135deg, #f1faf4 0%, #ffffff 60%); }
 .hero-sub { font-size: 1.2rem; color: var(--muted); max-width: 46rem; }
+.hero .eyebrow { margin: 0 0 .5rem; color: var(--green-700); font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .hero-points { padding-left: 1.2rem; max-width: 46rem; }
 .hero-points li { margin: .35rem 0; }
 .hero-cta { margin-top: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
@@ -93,6 +94,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 1rem; min-height: 70vh; }
 .map-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); margin: .5rem 0 1rem; }
 .slots { display: grid; gap: .75rem; margin-top: .75rem; }
 .slot { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; padding: .75rem; border: 1px dashed var(--line); border-radius: 12px; background: #fafcfb; }
+.calendar-reference { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .8rem; padding: .55rem .7rem; border-radius: 9px; background: #eef5f0; }
+.calendar-reference small { color: var(--muted); }
 .slider { margin: 1rem 0; }
 .slider small { font-weight: 400; }
 .slider-top { display: flex; justify-content: space-between; align-items: baseline; }
@@ -124,6 +127,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 1rem; min-height: 70vh; }
 .summary .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem; font-weight: 800; color: var(--muted); }
 .summary h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); margin: .2rem 0 .4rem; }
 .summary ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+.location-alert { display: flex; gap: .35rem; flex-wrap: wrap; padding: .85rem 1rem; margin: 0 0 1rem; border: 1px solid #d69e2e; border-left: 6px solid #b7791f; border-radius: 12px; background: #fff8e6; color: #633f00; box-shadow: var(--shadow); }
+.location-alert strong { color: #633f00; }
 
 .tabs { display: flex; gap: .25rem; overflow-x: auto; border-bottom: 2px solid var(--line); margin-bottom: 1rem; }
 .tabs button { border: 0; background: none; border-radius: 10px 10px 0 0; min-height: 44px; color: var(--muted); white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px; }
@@ -239,8 +244,21 @@ dd { margin-left: 0; color: var(--muted); }
 .ds-mark { width: 1.3rem; height: 1.3rem; flex: none; display: inline-grid; place-items: center; border-radius: 50%; font-weight: 800; font-size: .8rem; background: #e5e9ee; }
 .ds-ok .ds-mark { background: var(--green-600); color: #fff; }
 .ds-loading .ds-mark { background: var(--blue-100); color: var(--blue-700); }
+.ds-context .ds-mark { background: #e8edf8; color: var(--blue-700); }
 .ds-body small { display: block; color: var(--muted); }
 .ds-state { color: var(--muted); font-size: .85rem; }
+.field-evidence summary, .water-context summary { cursor: pointer; font-weight: 750; }
+.field-evidence h4, .water-map-card h4 { margin: .85rem 0 .4rem; }
+.field-evidence .grid3 { margin: .65rem 0; }
+.field-evidence input { width: 100%; min-width: 0; }
+.water-map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .8rem; margin: .8rem 0; }
+.water-map-card { min-width: 0; padding: .6rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfdfc; }
+.water-map-card h4 { margin-top: 0; font-size: .98rem; }
+.water-map-card img { display: block; width: 100%; aspect-ratio: 12 / 7; object-fit: cover; border-radius: 8px; background: #edf1f4; }
+.water-map-card img.water-map-image-failed { display: none; }
+.water-map-card p { margin: .4rem 0; font-size: .86rem; }
+.water-map-card small { color: var(--muted); }
+.water-image-error { padding: .65rem; border-radius: 8px; background: #fff4e5; color: #744210; }
 .soiltable { width: 100%; border-collapse: collapse; margin: .5rem 0 1rem; font-size: .95rem; }
 .soiltable caption { text-align: left; font-weight: 700; padding-bottom: .3rem; font-size: .9rem; color: var(--muted); }
 .soiltable th, .soiltable td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
@@ -282,9 +300,10 @@ dd { margin-left: 0; color: var(--muted); }
 .combo-opt .main b { font-weight: 800; }
 .combo-opt .rest { font-size: .85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .combo-opt .kind { flex: none; font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; background: #eef1f4; color: var(--muted); }
+.combo-opt .kind.google-source { background: var(--blue-100); color: var(--blue-700); }
 .combo-empty, .combo-foot { padding: .55rem 1rem; color: var(--muted); font-size: .88rem; }
 .combo-foot { border-top: 1px solid var(--line); }
-@media (max-width: 860px) { .searchrow { grid-template-columns: 1fr; } .combo-opt .kind { display: none; } }
+@media (max-width: 860px) { .searchrow { grid-template-columns: 1fr; } .combo-opt .kind { display: none; } .combo-opt .kind.google-source { display: inline-flex; font-size: .66rem; padding: .1rem .35rem; } }
 
 .combo-opt .pin { color: var(--muted); }
 .combo-opt.on .pin { background: #fff; color: var(--blue-700); }

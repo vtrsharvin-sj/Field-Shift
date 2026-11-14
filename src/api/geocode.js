@@ -102,25 +102,36 @@ export async function searchWikipediaPlaces(query, opts = {}) {
 
 // ---- Google (Places text search and Geocoder through the loaded Maps JavaScript API)
 /**
- * Needs "Places API (New)" and "Geocoding API" enabled for the key in Google Cloud Console.
- * When they are not, this returns [] and calls report(service, reason).
+ * Place search needs "Places API (New)". The optional address fallback uses "Geocoding API".
+ * Missing services return [] and call report(service, reason).
  */
-export async function searchGoogle(query, g = globalThis.window?.google, report = () => {}) {
-  if (!g?.maps) return []
+export async function searchGooglePlaces(query, g = globalThis.window?.google, report = () => {}, near = null) {
+  const maps = g?.maps ?? g
+  if (!maps?.importLibrary) return []
   const out = []
   try {
-    const { Place } = await g.maps.importLibrary('places')
-    const r = await Place.searchByText({ textQuery: query, fields: ['displayName', 'formattedAddress', 'location', 'types'], maxResultCount: 8 })
+    const { Place } = await maps.importLibrary('places')
+    const request = { textQuery: query, fields: ['displayName', 'formattedAddress', 'location', 'types'], maxResultCount: 8, language: 'en' }
+    if (near && Number.isFinite(near.lat) && Number.isFinite(near.lon)) {
+      request.locationBias = { center: { lat: near.lat, lng: near.lon }, radius: 50000 }
+    }
+    const r = await Place.searchByText(request)
     ;(r.places ?? []).forEach((p) => out.push({ name: [p.displayName, p.formattedAddress].filter(Boolean).join(', '), lat: p.location.lat(), lon: p.location.lng(), kind: (p.types?.[0] ?? '').replace(/_/g, ' '), source: 'Google' }))
   } catch (e) {
     report('places', e.message)
   }
-  if (!g.maps.Geocoder) return out
+  return out
+}
+
+export async function searchGoogle(query, g = globalThis.window?.google, report = () => {}, near = null) {
+  const out = await searchGooglePlaces(query, g, report, near)
+  const maps = g?.maps ?? g
+  if (!maps?.Geocoder) return out
   await new Promise((resolve) => {
     try {
-      new g.maps.Geocoder().geocode({ address: query }, (results, status) => {
+      new maps.Geocoder().geocode({ address: query }, (results, status) => {
         if (status === 'OK' && Array.isArray(results)) results.slice(0, 4).forEach((r) => out.push({ name: r.formatted_address, lat: Number(r.geometry.location.lat()), lon: Number(r.geometry.location.lng()), kind: 'address', source: 'Google' }))
-        else report('geocoder', status)
+        else if (!out.length) report('geocoder', status)
         resolve()
       })
     } catch {
@@ -128,6 +139,34 @@ export async function searchGoogle(query, g = globalThis.window?.google, report 
     }
   })
   return out
+}
+
+/** Google Places autocomplete predictions for the live search box.
+ * Reuse one Places session token while the user types; the selected prediction
+ * carries it into fetchFields(), which completes that autocomplete session.
+ */
+export async function suggestGooglePlaces(query, g = globalThis.window?.google, sessionToken = null, near = null) {
+  const q = String(query ?? '').trim()
+  const maps = g?.maps ?? g
+  if (q.length < 2 || !maps?.importLibrary) return { places: [], sessionToken }
+  const { AutocompleteSuggestion, AutocompleteSessionToken } = await maps.importLibrary('places')
+  const token = sessionToken ?? new AutocompleteSessionToken()
+  const request = { input: q, sessionToken: token, language: 'en' }
+  if (near && Number.isFinite(near.lat) && Number.isFinite(near.lon)) {
+    request.origin = { lat: near.lat, lng: near.lon }
+  }
+  const { suggestions = [] } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request)
+  const places = suggestions.flatMap((suggestion) => {
+    const prediction = suggestion.placePrediction
+    if (!prediction) return []
+    return [{
+      name: prediction.text?.toString() ?? '',
+      kind: prediction.types?.[0] ?? 'place',
+      source: 'Google',
+      googlePrediction: prediction,
+    }]
+  }).filter((p) => p.name)
+  return { places, sessionToken: token }
 }
 
 // ---- Merging and the combined search
@@ -148,7 +187,7 @@ export async function searchPlaces(query, opts = {}) {
   const q = String(query ?? '').trim()
   if (q.length < 2) return []
   const { report, ...io } = opts
-  const settled = await Promise.allSettled([searchGoogle(q, undefined, report), searchPhoton(q, io), searchNominatim(q, io), searchWikipediaPlaces(q, io), searchOpenMeteo(q, io)])
+  const settled = await Promise.allSettled([searchGoogle(q, undefined, report, io.near), searchPhoton(q, io), searchNominatim(q, io), searchWikipediaPlaces(q, io), searchOpenMeteo(q, io)])
   const lists = settled.filter((s) => s.status === 'fulfilled').map((s) => s.value)
   const network = settled.slice(1)
   // Google never rejects (it returns [] when unavailable), so only the other sources decide whether the search failed.
@@ -156,7 +195,7 @@ export async function searchPlaces(query, opts = {}) {
   return mergePlaces(lists)
 }
 
-/** Quick suggestions while typing: Photon only (built for it). */
+/** Quick open-map suggestions while typing. Google autocomplete is combined in the UI when configured. */
 export async function suggestPlaces(query, { minLength = 2, ...opts } = {}) {
   const q = String(query ?? '').trim()
   if (q.length < minLength) return []

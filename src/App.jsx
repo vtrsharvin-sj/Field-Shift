@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import crops from './data/crops.json'
 import rotations from './data/rotations.json'
 import soils from './data/soils.json'
@@ -8,13 +8,15 @@ import { fetchPower, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchSatelliteBundle } from './api/satellite.js'
 import { fetchLocalCrops } from './api/localCrops.js'
+import { fetchGlobalCropCalendar } from './api/globalCropCalendar.js'
 import { buildContext } from './scoring/engine.js'
 import { compareStrategies } from './scoring/planner.js'
 import { buildCards } from './scoring/explain.js'
-import LocationPicker from './components/LocationPicker.jsx'
 import { FarmForm, Priorities, MAX_CUSTOM_CROPS } from './components/FarmForm.jsx'
-import Results from './components/Results.jsx'
 import { Footer, Header, Hero, Loading, Stepper } from './components/Shell.jsx'
+
+const LocationPicker = lazy(() => import('./components/LocationPicker.jsx'))
+const Results = lazy(() => import('./components/Results.jsx'))
 
 const emptySlots = () => Array.from({ length: MAX_CUSTOM_CROPS }, () => ({ crop: '', sowMonth: 'auto', year: 0 }))
 
@@ -35,6 +37,8 @@ export default function App() {
   const [soil, setSoil] = useState({ status: 'idle', info: null })
   const [sat, setSat] = useState({ status: 'idle', raw: null, progress: { done: 0, total: 0 } })
   const [local, setLocal] = useState({ status: 'idle', data: null, key: '' })
+  const [calendar, setCalendar] = useState({ status: 'idle', data: null })
+  const calendarRequest = useRef(0)
   const [view, setView] = useState('wizard') // wizard | loading | results
   const [step, setStep] = useState(0)
   const [showHero, setShowHero] = useState(true)
@@ -50,6 +54,25 @@ export default function App() {
     } catch (e) {
       setLocal((cur) => (cur.key === key ? { status: 'ok', data: { available: false, reason: e.message }, key } : cur))
     }
+  }
+
+  async function loadCropCalendar(lat, lon) {
+    const id = ++calendarRequest.current
+    setCalendar({ status: 'loading', data: null })
+    try {
+      const data = await fetchGlobalCropCalendar(lat, lon)
+      if (id === calendarRequest.current) setCalendar({ status: 'ok', data })
+    } catch (error) {
+      if (id === calendarRequest.current) setCalendar({ status: 'error', data: null, error: error.message })
+    }
+  }
+
+  function goToStep(next) {
+    if (next === 1) {
+      void loadLocal(farm.lat, farm.lon)
+      void loadCropCalendar(farm.lat, farm.lon)
+    }
+    setStep(next)
   }
 
   const patchFarm = useCallback((p) => setFarm((f) => ({ ...f, ...p })), [])
@@ -94,11 +117,16 @@ export default function App() {
     if (!m) return
     const p = { lat: m.lat, lon: m.lon }
     setSat({ status: 'loading', raw: null, progress: { done: 0, total: 0 } })
-    const raw = await fetchSatelliteBundle(p, weights.satellite.slopeClasses, {
-      force,
-      onProgress: (done, total) => { if (id === runId.current) setSat((s) => (s.status === 'loading' ? { ...s, progress: { done, total } } : s)) },
-    })
-    if (id === runId.current) setSat((s) => ({ ...s, status: 'ok', raw }))
+    try {
+      const raw = await fetchSatelliteBundle(p, weights.satellite.slopeClasses, {
+        force,
+        onProgress: (done, total) => { if (id === runId.current) setSat((s) => (s.status === 'loading' ? { ...s, progress: { done, total } } : s)) },
+      })
+      if (id === runId.current) setSat((s) => ({ ...s, status: 'ok', raw }))
+    } catch (e) {
+      // Climate recommendations remain usable when the optional satellite service is down.
+      if (id === runId.current) setSat((s) => ({ ...s, status: 'ok', raw: { errors: { bundle: e.message || 'Satellite request failed' } } }))
+    }
   }
 
   const onPreset = (id) => setFarm((f) => (id === 'custom' ? { ...f, presetId: 'custom' } : id === '' ? { ...f, presetId: '', baselineCrops: emptySlots() } : { ...f, presetId: id, baselineCrops: slotsFromPreset(id) }))
@@ -112,13 +140,13 @@ export default function App() {
   const result = useMemo(() => {
     if (!ctx) return null
     const baselineEntries = farm.baselineCrops.filter((s) => s.crop)
-    if (!baselineEntries.length) return { error: 'Choose at least one crop for your current rotation (use "Edit soil, water and current rotation").', cards: [], skipped: [] }
+    if (baselineEntries.length < 2) return { error: 'Choose both crops for your current rotation (use "Edit soil, water and current rotation").', cards: [], skipped: [] }
     const comparison = compareStrategies({ baselineEntries, strategies: rotations.strategies, ctx, priorities })
     return buildCards({ comparison, ctx, priorities, soilInfo: soil.info })
   }, [ctx, farm.baselineCrops, priorities, soil.info])
 
   const locationOk = farm.lat !== '' && farm.lon !== '' && !validateLocation(farm.lat, farm.lon)
-  const cropsOk = farm.baselineCrops.some((s) => s.crop)
+  const cropsOk = farm.baselineCrops.filter((s) => s.crop).length >= 2
   const canGo = (i) => i === 0 || (i === 1 && locationOk) || (i === 2 && locationOk && cropsOk)
   const goHome = () => {
     setView('wizard')
@@ -134,10 +162,10 @@ export default function App() {
 
         {view === 'wizard' && !showHero && (
           <div className="wizard">
-            <Stepper step={step} onGo={setStep} canGo={canGo} />
+            <Stepper step={step} onGo={goToStep} canGo={canGo} />
             <div className="card-plain">
-              {step === 0 && <LocationPicker farm={farm} onChange={patchFarm} />}
-              {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} local={local.data} localStatus={local.status} />}
+              {step === 0 && <Suspense fallback={<p className="hint" role="status">Loading the map…</p>}><LocationPicker farm={farm} onChange={patchFarm} /></Suspense>}
+              {step === 1 && <FarmForm farm={farm} onChange={patchFarm} onPreset={onPreset} soilInfo={soil.info} soilStatus={soil.status} zone={ctx?.climate ?? null} local={local.data} localStatus={local.status} globalCalendar={calendar.data} calendarStatus={calendar.status} />}
               {step === 2 && (
                 <>
                   <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
@@ -154,7 +182,7 @@ export default function App() {
               <div className="nav">
                 <button type="button" className="ghost" onClick={() => (step === 0 ? goHome() : setStep(step - 1))}>Back</button>
                 {step < 2 ? (
-                  <button type="button" className="primary" onClick={() => { if (step === 0) loadLocal(farm.lat, farm.lon); setStep(step + 1) }} disabled={!canGo(step + 1)}>
+                  <button type="button" className="primary" onClick={() => goToStep(step + 1)} disabled={!canGo(step + 1)}>
                     Next
                   </button>
                 ) : (
@@ -164,7 +192,7 @@ export default function App() {
                 )}
               </div>
               {step === 0 && !locationOk && <p className="hint" aria-live="polite">Choose a spot on the map, search for a place, or type coordinates to continue.</p>}
-              {step === 1 && !cropsOk && <p className="hint" aria-live="polite">Choose at least one crop that you grow now.</p>}
+              {step === 1 && !cropsOk && <p className="hint" aria-live="polite">Choose both crops that you grow now before continuing.</p>}
             </div>
           </div>
         )}
@@ -172,6 +200,7 @@ export default function App() {
         {view === 'loading' && <Loading stage={1} />}
 
         {view === 'results' && data.status === 'ok' && ctx && result && (
+          <Suspense fallback={<Loading stage={1} />}>
           <Results
             ctx={ctx}
             result={result}
@@ -185,11 +214,13 @@ export default function App() {
             setScenario={setScenario}
             soil={soil}
             local={local}
+            calendar={calendar}
             sat={sat}
             onLoadSat={() => loadSatellite({ force: true })}
             onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}
             onPrint={() => window.print()}
           />
+          </Suspense>
         )}
       </main>
       <Footer />
