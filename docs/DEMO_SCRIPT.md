@@ -3,7 +3,7 @@
 ## Before presenting
 
 - Open the deployed app or run it locally and confirm the network is available.
-- Use a prepared rural agricultural point in **Coimbatore district, Tamil Nadu, India**, not the city centre; keep a second prepared point available in case a public data service is slow. Confirm the MODIS land-cover result in advance. Introduce it as an illustrative demo location, not a validated pilot site.
+- Choose a prepared rural agricultural point in any region familiar to your audience; keep a second point available in case a public data service is slow. Confirm the MODIS land-cover result in advance. Introduce the location as an illustration, not a validated pilot site.
 - Select an existing rotation that is plausible for the chosen region. Say clearly that the example is illustrative and the crop table needs local validation.
 - If optional satellite layers are still loading, present them as supplemental and continue with the climate-backed comparison.
 

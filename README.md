@@ -17,11 +17,11 @@ Rotation decisions are made under pressure from variable rainfall, heat, water a
 5. Open a strategy to review its seasonal fit, score components, NASA evidence, uncertainty, benefits, risks and information gaps.
 6. Explore local crop references, climate summaries, optional satellite layers and a clearly labeled what-if scenario. Print the comparison to PDF for a field conversation.
 
-For a fast live demo, use a **rural agricultural point in Coimbatore district, Tamil Nadu, India** (not the city centre), choose a locally familiar current rotation and show the strategy cards before opening the evidence and data-quality sections. Check the MODIS land-cover result before interpreting the scores; if the selected pixel is urban or mixed, say so and treat the example as regional screening. Results depend on the live data services and the exact input choices.
+For a fast live demo, choose a rural agricultural point in any region you know, then enter a locally familiar current rotation. Check the MODIS land-cover result before interpreting scores; if the selected pixel is urban or mixed, explain that the result is regional screening. Results depend on the live data services and the exact input choices.
 
 ## NASA Space Apps submission links
 
-- Project demonstration: [Download the seven-slide deck](https://vtrsharvin-sj.github.io/Field-Shift/demo/FieldShift-Demo-v2.pptx)
+- Project demonstration: [Download the seven-slide deck](https://vtrsharvin-sj.github.io/Field-Shift/demo/FieldShift-Hackathon-Demo.pptx)
 - Project: [Open the live FieldShift app](https://vtrsharvin-sj.github.io/Field-Shift/)
 
 ## What the prototype does
