@@ -21,7 +21,7 @@ For a fast live demo, choose a rural agricultural point in any region you know, 
 
 ## NASA Space Apps submission links
 
-- Project demonstration: [Download the seven-slide deck](https://vtrsharvin-sj.github.io/Field-Shift/demo/FieldShift-Hackathon-Demo.pptx)
+- Project demonstration: [Download the seven-slide deck](https://vtrsharvin-sj.github.io/Field-Shift/demo/FieldShift-Hackathon-Submission.pptx)
 - Project: [Open the live FieldShift app](https://vtrsharvin-sj.github.io/Field-Shift/)
 
 ## What the prototype does
