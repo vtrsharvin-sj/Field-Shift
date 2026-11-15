@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import { exportOfflineDataset, importOfflineDataset } from '../api/power.js'
-import { WINDOW } from '../defaults.js'
 
 // "Data used" checklist. Every row says what it is, its source, resolution and state, in words (not only colour).
 
@@ -121,8 +119,7 @@ function WaterLayerCard({ layer, src }) {
   )
 }
 
-export default function DataStatus({ ctx, power, soil, sat, local, calendar, farm, onDatasetImported }) {
-  const [offlineMessage, setOfflineMessage] = useState('')
+export default function DataStatus({ ctx, power, soil, sat, local, calendar, farm }) {
   const s = ctx.satellite
   const loading = sat.status === 'loading'
   const errs = sat.raw?.errors ?? {}
@@ -136,41 +133,8 @@ export default function DataStatus({ ctx, power, soil, sat, local, calendar, far
   return (
     <div className="panel">
       <h3>Data used</h3>
-      <section className="offline-dataset" aria-labelledby="offline-h">
-        <h4 id="offline-h">Offline climate dataset</h4>
-        <p>This browser saves the NASA record automatically. Download a copy for the same farm and dates; on another device, open FieldShift online once, then import the file from the final setup step to run it offline.</p>
-        <div className="offline-actions">
-          <button type="button" className="secondary small" onClick={() => {
-            try {
-              const dataset = exportOfflineDataset(power)
-              const blob = new Blob([JSON.stringify(dataset)], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = `fieldshift-nasa-power-${Number(power.meta.lat).toFixed(2)}-${Number(power.meta.lon).toFixed(2)}-${power.meta.startYear}-${power.meta.endYear}.json`
-              a.click()
-              URL.revokeObjectURL(url)
-              setOfflineMessage(`${dataset.days.length.toLocaleString()} daily records exported. Keep the file private if it includes a farm location.`)
-            } catch (error) { setOfflineMessage(error.message) }
-          }}>Download this location's dataset</button>
-          <label className="offline-file">Import a FieldShift dataset
-            <input type="file" accept=".json,application/json" onChange={async (event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              try {
-                const dataset = JSON.parse(await file.text())
-                await importOfflineDataset(dataset, { lat: power.meta.lat, lon: power.meta.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
-                setOfflineMessage('Offline dataset imported. Refreshing this location’s analysis from the saved NASA record…')
-                await onDatasetImported?.()
-              } catch (error) { setOfflineMessage(error.message) }
-              event.target.value = ''
-            }} />
-          </label>
-        </div>
-        {offlineMessage && <p className="hint" role="status" aria-live="polite">{offlineMessage}</p>}
-      </section>
       <ul className="dslist">
-        <Row state="ok" name="Climate (NASA POWER)" detail={`${m.startYear} to ${m.endYear}, ${Math.round(m.completeness * 1000) / 10}% of days usable, about 50 km grid${m.origin !== 'live' ? '. Saved in this browser for offline use' : ''}`} />
+        <Row state="ok" name="Climate (NASA POWER)" detail={`${m.startYear} to ${m.endYear}, ${Math.round(m.completeness * 1000) / 10}% of days usable, about 50 km grid${m.origin !== 'live' ? '. Loaded from browser cache' : ''}`} />
         {si ? (
           <Row state="ok" name="Soil (SoilGrids, not NASA)" detail={`${si.texture}, ${si.depth}, 250 m${si.nearbyKm ? `, taken ${si.nearbyKm} km away` : ''}. Modelled, not a soil test.`} />
         ) : soil.status === 'loading' ? (

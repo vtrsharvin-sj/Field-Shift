@@ -30,7 +30,7 @@ NASA POWER daily data from 2005 through the current year derives temperature and
 
 The selected farm point is used to request each source independently. Daily climate and GPM rainfall records are aggregated into seasonal and monthly features; SMAP root-zone wetness is summarized over crop windows, while vegetation, evapotranspiration, temperature, land-cover, soil and terrain products retain their own native pixel sizes and time windows. Those features meet in the crop-season screening and explanation layer, with source, date range, resolution and limitations carried into the result. FieldShift does not resample every product to a fictitious common field resolution. NASA GIBS remains visual context, and GRACE remains too coarse to support a field-level score.
 
-After first online use, the app shell and static crop-calendar reference are cached for offline visits. Each point's NASA POWER daily series can be exported as a portable, provenance-labeled JSON dataset and imported only for matching coordinates and date range. This supports repeat analysis away from connectivity without claiming global offline weather coverage.
+After successful online requests, NASA POWER responses are cached by the browser for repeat requests at the same coordinates and period. This cache is device-specific. Soil, place lookup and optional satellite services may still need connectivity.
 
 ```mermaid
 flowchart LR

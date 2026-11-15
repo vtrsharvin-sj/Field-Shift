@@ -116,9 +116,6 @@ function applySmapCoverage(parsed, lat) {
 const memoryCache = new Map()
 const LS_PREFIX = 'powerCache:v3:'
 
-const DATASET_SCHEMA = 'fieldshift.nasa-power.daily.v1'
-const OFFLINE_DB = 'fieldshift-offline-v1'
-
 function cacheKey(o) {
   const smapDomain = Math.abs(Number(o.lat)) <= 84.66 ? 'smap-domain' : 'outside-smap-domain'
   return `${Number(o.lat).toFixed(2)},${Number(o.lon).toFixed(2)},${o.startYear}-${o.endYear}:${smapDomain}`
@@ -143,38 +140,6 @@ function writeLocal(key, value) {
   }
 }
 
-function openOfflineDb() {
-  if (!globalThis.indexedDB) return Promise.resolve(null)
-  return new Promise((resolve) => {
-    const req = globalThis.indexedDB.open(OFFLINE_DB, 1)
-    req.onupgradeneeded = () => req.result.createObjectStore('datasets')
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => resolve(null)
-  })
-}
-
-async function readIndexedDataset(key) {
-  const db = await openOfflineDb()
-  if (!db) return null
-  return new Promise((resolve) => {
-    const req = db.transaction('datasets', 'readonly').objectStore('datasets').get(key)
-    req.onsuccess = () => { db.close(); resolve(req.result ?? null) }
-    req.onerror = () => { db.close(); resolve(null) }
-  })
-}
-
-async function writeIndexedDataset(key, value) {
-  const db = await openOfflineDb()
-  if (!db) return false
-  return new Promise((resolve) => {
-    const tx = db.transaction('datasets', 'readwrite')
-    tx.objectStore('datasets').put(value, key)
-    tx.oncomplete = () => { db.close(); resolve(true) }
-    tx.onerror = () => { db.close(); resolve(false) }
-    tx.onabort = () => { db.close(); resolve(false) }
-  })
-}
-
 async function fetchJson(url, { timeoutMs, fetchImpl }) {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -197,23 +162,12 @@ export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchIm
   const key = cacheKey(opts)
   if (memoryCache.has(key)) return { ...memoryCache.get(key), meta: { ...memoryCache.get(key).meta, origin: 'memory-cache' } }
 
-  // Prefer IndexedDB imports (which may be newer than an older localStorage snapshot).
-  const local = (await readIndexedDataset(key)) ?? readLocal(key)
-  if (local) {
-    if (local.dataset) {
-      const dataset = validateOfflineDataset(local.dataset)
-      if (dataset && Number(dataset.location.lat).toFixed(2) === Number(opts.lat).toFixed(2) && Number(dataset.location.lon).toFixed(2) === Number(opts.lon).toFixed(2)) {
-        const parsed = { days: dataset.days, meta: { ...dataset.meta, origin: 'offline-dataset', fetchedAt: dataset.exportedAt, lat: dataset.location.lat, lon: dataset.location.lon } }
-        memoryCache.set(key, parsed)
-        return parsed
-      }
-    }
-    if (local.json) {
-      const parsed = applySmapCoverage(parsePowerResponse(local.json), opts.lat)
-      parsed.meta = { ...parsed.meta, origin: 'browser-cache', fetchedAt: local.fetchedAt, lat: opts.lat, lon: opts.lon, requestStartYear: opts.startYear, requestEndYear: opts.endYear }
-      memoryCache.set(key, parsed)
-      return parsed
-    }
+  const local = readLocal(key)
+  if (local?.json) {
+    const parsed = applySmapCoverage(parsePowerResponse(local.json), opts.lat)
+    parsed.meta = { ...parsed.meta, origin: 'browser-cache', fetchedAt: local.fetchedAt, lat: opts.lat, lon: opts.lon, requestStartYear: opts.startYear, requestEndYear: opts.endYear }
+    memoryCache.set(key, parsed)
+    return parsed
   }
 
   const url = buildUrl(opts)
@@ -235,55 +189,4 @@ export async function fetchPower(opts, { retries = 2, timeoutMs = 90000, fetchIm
   }
   const reason = lastErr?.name === 'AbortError' ? 'The request timed out.' : lastErr?.message
   throw new Error(`Could not get NASA POWER data. ${reason ?? ''}`.trim())
-}
-
-/** Portable, point-specific offline package. It keeps NASA's source values and metadata intact. */
-export function exportOfflineDataset(power) {
-  if (!power?.days?.length || !Number.isFinite(Number(power.meta?.lat)) || !Number.isFinite(Number(power.meta?.lon))) {
-    throw new Error('There is no location-specific NASA POWER dataset to export yet.')
-  }
-  return {
-    schema: DATASET_SCHEMA,
-    title: 'FieldShift offline NASA POWER daily dataset',
-    exportedAt: new Date().toISOString(),
-    source: 'NASA POWER Daily Point API (Agroclimatology community)',
-    sourceUrl: POWER_BASE,
-    methodology: 'Original point time series from the selected coordinates. GPM IMERG and SMAP values are retained only when present in the NASA POWER response. This package is a local offline copy, not a forecast.',
-    location: { lat: power.meta.lat, lon: power.meta.lon },
-    meta: { ...power.meta, origin: 'offline-dataset' },
-    days: power.days,
-  }
-}
-
-/** Reject wrong-schema, empty, mismatched, or implausibly short files before caching. */
-export function validateOfflineDataset(data) {
-  if (data?.schema !== DATASET_SCHEMA || !Array.isArray(data.days) || data.days.length < 360) return null
-  const lat = Number(data.location?.lat)
-  const lon = Number(data.location?.lon)
-  const start = Number(data.meta?.requestStartYear ?? data.meta?.startYear)
-  const end = Number(data.meta?.requestEndYear ?? data.meta?.endYear)
-  if (!validateLocation(lat, lon) && Number.isInteger(start) && Number.isInteger(end) && end >= start) {
-    const validDay = data.days.every((d) => d && Number.isInteger(d.year) && Number.isInteger(d.month) && d.month >= 1 && d.month <= 12 && Number.isInteger(d.day) && d.day >= 1 && d.day <= 31 && (Number.isFinite(d.rain) || d.rain == null))
-    if (!validDay) return null
-    return { ...data, location: { lat, lon }, meta: { ...data.meta, startYear: data.meta.startYear ?? start, endYear: data.meta.endYear ?? end, requestStartYear: start, requestEndYear: end } }
-  }
-  return null
-}
-
-/** Import an exported package into this browser's offline cache for the same point and requested years. */
-export async function importOfflineDataset(data, expected = {}) {
-  const dataset = validateOfflineDataset(data)
-  if (!dataset) throw new Error('This is not a valid FieldShift NASA POWER dataset. Choose a JSON file exported from FieldShift.')
-  if (expected.lat != null && (Number(dataset.location.lat).toFixed(2) !== Number(expected.lat).toFixed(2) || Number(dataset.location.lon).toFixed(2) !== Number(expected.lon).toFixed(2))) {
-    throw new Error('This dataset belongs to a different location. Export the dataset from the farm you want to analyze.')
-  }
-  if (expected.startYear != null && (dataset.meta.requestStartYear !== Number(expected.startYear) || dataset.meta.requestEndYear !== Number(expected.endYear))) {
-    throw new Error('This dataset covers a different date range. Download a fresh copy for this analysis.')
-  }
-  const key = cacheKey({ lat: dataset.location.lat, lon: dataset.location.lon, startYear: dataset.meta.requestStartYear, endYear: dataset.meta.requestEndYear })
-  const cached = { dataset, fetchedAt: dataset.exportedAt }
-  const stored = await writeIndexedDataset(key, cached)
-  if (!stored && !writeLocal(key, cached)) throw new Error('This browser could not save the offline dataset. Check browser storage settings and try again.')
-  memoryCache.delete(key)
-  return { days: dataset.days, meta: { ...dataset.meta, origin: 'offline-dataset', fetchedAt: dataset.exportedAt, lat: dataset.location.lat, lon: dataset.location.lon } }
 }

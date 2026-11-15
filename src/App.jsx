@@ -4,7 +4,7 @@ import rotations from './data/rotations.json'
 import soils from './data/soils.json'
 import weights from './data/weights.json'
 import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
-import { exportOfflineDataset, fetchPower, importOfflineDataset, validateLocation } from './api/power.js'
+import { fetchPower, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchSatelliteBundle } from './api/satellite.js'
 import { fetchLocalCrops } from './api/localCrops.js'
@@ -42,8 +42,6 @@ export default function App() {
   const [view, setView] = useState('wizard') // wizard | loading | results
   const [step, setStep] = useState(0)
   const [showHero, setShowHero] = useState(true)
-  const [offlineImportMessage, setOfflineImportMessage] = useState('')
-  const [offlinePreparing, setOfflinePreparing] = useState(false)
 
   // What is grown around the farm (text about the area). Starts when the location is confirmed so the crop lists in step 2 are already smart.
   async function loadLocal(lat, lon) {
@@ -112,22 +110,6 @@ export default function App() {
     }
   }
 
-  async function prepareLocationOfflineDataset() {
-    try {
-      setOfflinePreparing(true)
-      setOfflineImportMessage('Downloading NASA POWER data for this location and saving an offline copy…')
-      const power = await fetchPower({ lat: farm.lat, lon: farm.lon, ...WINDOW })
-      const dataset = exportOfflineDataset(power)
-      await importOfflineDataset(dataset, { lat: farm.lat, lon: farm.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
-      setOfflineImportMessage('This location’s NASA dataset is saved offline. Running the comparison from that saved record…')
-      await loadData(farm)
-    } catch (error) {
-      setOfflineImportMessage(error.message)
-    } finally {
-      setOfflinePreparing(false)
-    }
-  }
-
   // Satellite layers load in the background right after the climate data. A run id drops results from an older analysis.
   const runId = useRef(0)
   async function loadSatellite({ point, force = false, id = runId.current } = {}) {
@@ -187,30 +169,6 @@ export default function App() {
               {step === 2 && (
                 <>
                   <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
-                  <section className="offline-wizard" aria-labelledby="offline-import-h">
-                    <h3 id="offline-import-h">Have an offline NASA dataset?</h3>
-                    <p>Import a FieldShift JSON file for these coordinates and dates, then run the comparison without a live weather request.</p>
-                    <div className="offline-sample">
-                      <p><strong>Use this farm offline:</strong> Get the NASA POWER record for the location you selected, save it in this browser, and run the comparison from that copy.</p>
-                      <button type="button" className="secondary" onClick={prepareLocationOfflineDataset} disabled={!locationOk || offlinePreparing}>
-                        {offlinePreparing ? 'Preparing offline dataset…' : 'Get NASA data for this location & save offline'}
-                      </button>
-                      <p className="hint">This first download needs internet. Later analyses at the same coordinates and date range use the saved dataset. You can export a portable JSON copy from Data used.</p>
-                    </div>
-                    <label>Choose offline dataset
-                      <input type="file" accept=".json,application/json" onChange={async (event) => {
-                        const file = event.target.files?.[0]
-                        if (!file) return
-                        try {
-                          await importOfflineDataset(JSON.parse(await file.text()), { lat: farm.lat, lon: farm.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
-                          setOfflineImportMessage('Dataset matches this farm. Loading the analysis from the offline record…')
-                          await loadData(farm)
-                        } catch (error) { setOfflineImportMessage(error.message) }
-                        event.target.value = ''
-                      }} />
-                    </label>
-                    {offlineImportMessage && <p className="hint" role="status" aria-live="polite">{offlineImportMessage}</p>}
-                  </section>
                   {data.status === 'error' && (
                     <div className="error" role="alert">
                       <p><strong>We could not get the NASA data.</strong></p>
@@ -261,7 +219,6 @@ export default function App() {
             onLoadSat={() => loadSatellite({ force: true })}
             onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}
             onPrint={() => window.print()}
-            onDatasetImported={() => loadData(farm)}
           />
           </Suspense>
         )}
