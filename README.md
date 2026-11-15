@@ -19,6 +19,11 @@ Rotation decisions are made under pressure from variable rainfall, heat, water a
 
 For a fast live demo, use a **rural agricultural point in Coimbatore district, Tamil Nadu, India** (not the city centre), choose a locally familiar current rotation and show the strategy cards before opening the evidence and data-quality sections. Check the MODIS land-cover result before interpreting the scores; if the selected pixel is urban or mixed, say so and treat the example as regional screening. Results depend on the live data services and the exact input choices.
 
+## NASA Space Apps submission links
+
+- Project demonstration: [Download the seven-slide deck](https://vtrsharin-sj.github.io/Field-Shift/demo/FieldShift-Demo.pptx)
+- Project: [Open the live FieldShift app](https://vtrsharin-sj.github.io/Field-Shift/)
+
 ## What the prototype does
 
 - Downloads daily NASA POWER climate data for a selected point and derives seasonal rainfall, dry spells, heat/frost exposure, estimated reference evapotranspiration and crop water balance.
