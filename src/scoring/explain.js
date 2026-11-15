@@ -75,7 +75,7 @@ function evidenceFor(ev, ctx) {
     const s = ev.seasons[i]
     const row = ev.components.water.rows[i]
     const name = it.crop.name
-    lines.push({ text: `${name} (${monthSpan(it.sowMonth, it.durationDays)}): average rain ${r0(s.rainMean)} mm per season, varying about ${r0(s.rainCV ?? 0)}% from year to year. Crop water need is about ${r0(row.demand)} mm (Kc ${it.crop.cropCoefficientKc} x ET0 ${r0(s.et0Mean)} mm${it.crop.extraWaterMm ? `, plus ${it.crop.extraWaterMm} mm extra for flooding and land preparation` : ''}).`, source: `${src}. ET0 by Hargreaves-Samani from temperature and latitude.` })
+    lines.push({ text: `${name} (${monthSpan(it.sowMonth, it.durationDays)}): average rain ${r0(s.rainMean)} mm per season${s.rainDryYear != null ? `; the observed lower-quintile season was ${r0(s.rainDryYear)} mm (about one season in five was drier)` : ''}, with a ${r0(s.rainCV ?? 0)}% year-to-year coefficient of variation. Crop water need is about ${r0(row.demand)} mm (Kc ${it.crop.cropCoefficientKc} x ET0 ${r0(s.et0Mean)} mm${it.crop.extraWaterMm ? `, plus ${it.crop.extraWaterMm} mm extra for flooding and land preparation` : ''}).`, source: `${src}. ET0 by Hargreaves-Samani from temperature and latitude.` })
     lines.push({ text: `${name}: longest dry stretch averages ${r0(s.longestDryStretchMean)} days (worst year ${s.longestDryStretchMax}); ${s.heatDaysMean.toFixed(1)} very hot days (above ${it.crop.heatThresholdC} C) and ${s.frostDaysMean.toFixed(1)} frost nights per season.`, source: src })
     const sat = ctx.satellite
     if (sat?.et) {

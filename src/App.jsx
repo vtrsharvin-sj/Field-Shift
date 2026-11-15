@@ -4,7 +4,7 @@ import rotations from './data/rotations.json'
 import soils from './data/soils.json'
 import weights from './data/weights.json'
 import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
-import { fetchPower, validateLocation } from './api/power.js'
+import { fetchPower, importOfflineDataset, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchSatelliteBundle } from './api/satellite.js'
 import { fetchLocalCrops } from './api/localCrops.js'
@@ -42,6 +42,7 @@ export default function App() {
   const [view, setView] = useState('wizard') // wizard | loading | results
   const [step, setStep] = useState(0)
   const [showHero, setShowHero] = useState(true)
+  const [offlineImportMessage, setOfflineImportMessage] = useState('')
 
   // What is grown around the farm (text about the area). Starts when the location is confirmed so the crop lists in step 2 are already smart.
   async function loadLocal(lat, lon) {
@@ -169,6 +170,23 @@ export default function App() {
               {step === 2 && (
                 <>
                   <Priorities priorities={priorities} onChange={(p) => setPriorities((cur) => ({ ...cur, ...p }))} />
+                  <section className="offline-wizard" aria-labelledby="offline-import-h">
+                    <h3 id="offline-import-h">Have an offline NASA dataset?</h3>
+                    <p>Import a FieldShift JSON file for these coordinates and dates, then run the comparison without a live weather request.</p>
+                    <label>Choose offline dataset
+                      <input type="file" accept=".json,application/json" onChange={async (event) => {
+                        const file = event.target.files?.[0]
+                        if (!file) return
+                        try {
+                          await importOfflineDataset(JSON.parse(await file.text()), { lat: farm.lat, lon: farm.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
+                          setOfflineImportMessage('Dataset matches this farm. Loading the analysis from the offline record…')
+                          await loadData(farm)
+                        } catch (error) { setOfflineImportMessage(error.message) }
+                        event.target.value = ''
+                      }} />
+                    </label>
+                    {offlineImportMessage && <p className="hint" role="status" aria-live="polite">{offlineImportMessage}</p>}
+                  </section>
                   {data.status === 'error' && (
                     <div className="error" role="alert">
                       <p><strong>We could not get the NASA data.</strong></p>
@@ -219,6 +237,7 @@ export default function App() {
             onLoadSat={() => loadSatellite({ force: true })}
             onChangeLocation={() => { setView('wizard'); setStep(0); setShowHero(false) }}
             onPrint={() => window.print()}
+            onDatasetImported={() => loadData(farm)}
           />
           </Suspense>
         )}

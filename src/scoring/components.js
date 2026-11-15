@@ -23,7 +23,8 @@ export function waterScore(items, seasons, farm, w, soil, totalDays = null) {
     const allowance = total ? (annual * it.durationDays) / total : 0
     const demand = it.crop.cropCoefficientKc * s.et0Mean + it.crop.extraWaterMm
     const effRain = s.rainMean * soil.rainEfficiency
-    const dryRain = Math.max(0, s.rainMean * (1 - (w.water.dryYearCvFactor * (s.rainCV ?? 0)) / 100)) * soil.rainEfficiency
+    // Prefer observed lower-tail rainfall; retain the CV approximation for sparse records.
+    const dryRain = Math.max(0, s.rainDryYear ?? (s.rainMean * (1 - (w.water.dryYearCvFactor * (s.rainCV ?? 0)) / 100))) * soil.rainEfficiency
     const ratioMean = Math.max(0, demand - (effRain + allowance)) / demand
     const ratioDry = Math.max(0, demand - (dryRain + allowance)) / demand
     const tolFactor = w.water.toleranceBase - w.water.tolerancePerPoint * it.crop.droughtTolerance
@@ -46,7 +47,7 @@ export function waterScore(items, seasons, farm, w, soil, totalDays = null) {
     fit,
     frugality,
     irrigationNeed,
-    formula: `Water score = ${w.water.fitShare} x water fit + ${w.water.frugalityShare} x water saving. Water fit compares crop water demand (Kc x ET0 + extra water) with usable GPM IMERG rainfall (POWER precipitation fallback where GPM is missing) plus the water-source allowance, in an average year (${w.water.meanShare}) and a dry year (${w.water.dryYearShare}), scaled by drought tolerance. Where recent SMAP root-zone wetness is available, a low seasonal wetness signal adds up to ${w.water.smapDryPenaltyMax} points of risk for a drought-sensitive crop; the generic wetness trigger is ${w.water.smapDryWetnessThreshold} and is not a crop-specific critical limit. Water saving = 100 - irrigation needed / ${w.water.irrigationScaleMm} mm.`,
+    formula: `Water score = ${w.water.fitShare} x water fit + ${w.water.frugalityShare} x water saving. Water fit compares crop water demand (Kc x ET0 + extra water) with usable GPM IMERG rainfall (POWER precipitation fallback where GPM is missing) plus the water-source allowance, in an average year (${w.water.meanShare}) and the observed 20th-percentile rainfall season (${w.water.dryYearShare}; approximately one season in five is drier), scaled by drought tolerance. If fewer than 90% of daily rain values exist for enough seasons, a CV-based dry-year approximation is used. Where recent SMAP root-zone wetness is available, a low seasonal wetness signal adds up to ${w.water.smapDryPenaltyMax} points of risk for a drought-sensitive crop; the generic wetness trigger is ${w.water.smapDryWetnessThreshold} and is not a crop-specific critical limit. Water saving = 100 - irrigation needed / ${w.water.irrigationScaleMm} mm.`,
   }
 }
 

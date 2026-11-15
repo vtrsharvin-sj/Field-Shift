@@ -131,9 +131,14 @@ export function seasonIndicators(days, index, { lat, sowMonth, durationDays, kc 
   const col = (k) => perYear.map((p) => p[k]).filter((v) => v != null)
   const rains = col('rainTotal')
   const balances = col('waterBalance')
+  const completeRainYears = perYear.filter((p) => p.lengthDays > 0 && p.rainValidDays >= p.lengthDays * 0.9)
+  const completeRains = completeRainYears.map((p) => p.rainTotal)
   return {
     years: perYear.length,
     rainMean: mean(rains),
+    rainDryYear: completeRains.length >= 8 ? percentile(completeRains, 20) : null,
+    rainP10: percentile(completeRains, 10),
+    rainP90: percentile(completeRains, 90),
     rainCV: cv(rains),
     longestDryStretchMean: mean(col('longestDryStretch')),
     longestDryStretchMax: Math.max(...col('longestDryStretch')),

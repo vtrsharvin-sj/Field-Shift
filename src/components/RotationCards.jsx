@@ -172,7 +172,7 @@ function Compare({ cards }) {
   return (
     <div className="compare-wrap">
       <table className="compare">
-        <caption>All factors side by side (0 to 100, higher is better)</caption>
+        <caption>All factors side by side (0 to 100, higher is better). Change rows are versus your current rotation.</caption>
         <thead>
           <tr>
             <th scope="col">Factor</th>
@@ -205,9 +205,17 @@ function Compare({ cards }) {
               <td key={c.kind}>{r0(c.overall)}</td>
             ))}
           </tr>
+          <tr className="total delta-row">
+            <th scope="row">Change vs current</th>
+            <td />
+            {cards.map((c, i) => {
+              const delta = c.overall - cards[0].overall
+              return <td key={c.kind}>{i === 0 ? '—' : `${delta > 0 ? '+' : ''}${r0(delta)} points`}</td>
+            })}
+          </tr>
         </tbody>
       </table>
-      <p className="hint">★ marks the best score in each row. Weight is how much a factor counts in the overall score: the first four follow your sliders, and the temperature gate lowers the overall score when a crop is outside its comfortable temperature range.</p>
+      <p className="hint">★ marks the best score in each row. Weight follows your priorities. Scores are a transparent rule-based screening index, not predicted yield or profit; use the Climate tab to review rainfall spread, confidence intervals and trends across the observed years.</p>
     </div>
   )
 }

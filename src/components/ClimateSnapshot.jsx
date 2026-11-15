@@ -2,6 +2,7 @@ import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContai
 import { describeTrends } from '../indicators/climate.js'
 import { MONTH_NAMES } from '../scoring/rotation.js'
 import { powerSourceLabel } from '../scoring/explain.js'
+import { annualStatistics } from '../indicators/statistics.js'
 import Term from './Term.jsx'
 
 const r1 = (x) => (x == null ? null : Math.round(x * 10) / 10)
@@ -27,6 +28,8 @@ export default function ClimateSnapshot({ ctx, power }) {
   const trends = ctx.trends
   const lines = describeTrends(trends)
   const annual = trends.rows.map((r) => ({ name: String(r.year), rain: Math.round(r.rainMm), temp: r1(r.tmeanC) }))
+  const rainStats = annualStatistics(trends.rows, 'rainMm')
+  const tempStats = annualStatistics(trends.rows, 'tmeanC')
   const wettest = [...monthly].sort((a, b) => b.rain - a.rain)[0]
   const driest = [...monthly].sort((a, b) => a.rain - b.rain)[0]
   const hotTotal = monthly.reduce((s, m) => s + (m.heat ?? 0), 0)
@@ -42,6 +45,40 @@ export default function ClimateSnapshot({ ctx, power }) {
           Climate type at this point: <strong>{ctx.climate.label}</strong>. Average temperature {r1(ctx.climate.tAnn)} C, rainfall about {Math.round(ctx.climate.pAnn)} mm a year. {ctx.climate.text}
         </p>
       )}
+      <section className="stats-panel" aria-labelledby="stats-h">
+        <div>
+          <p className="eyebrow">Evidence at a glance</p>
+          <h3 id="stats-h">What the record says</h3>
+          <p className="hint">Complete annual observations only. The middle 80% range shows year-to-year spread; confidence intervals are a 3-year moving-block bootstrap of the mean, not a forecast.</p>
+        </div>
+        <div className="stats-grid">
+          {rainStats && <article className="stat-card">
+            <h4>Annual rainfall</h4>
+            <p className="stat-primary">{Math.round(rainStats.mean).toLocaleString()} <small>mm/year mean</small></p>
+            <dl>
+              <dt>Median</dt><dd>{Math.round(rainStats.median).toLocaleString()} mm</dd>
+              <dt>Standard deviation</dt><dd>{rainStats.sd == null ? '—' : `${Math.round(rainStats.sd).toLocaleString()} mm`}</dd>
+              <dt>Middle 80% of years</dt><dd>{Math.round(rainStats.p10).toLocaleString()}–{Math.round(rainStats.p90).toLocaleString()} mm</dd>
+              <dt>Year-to-year variation (CV)</dt><dd>{rainStats.cv == null ? '—' : `${Math.round(rainStats.cv)}%`}</dd>
+              {rainStats.meanCI && <><dt>95% interval for mean</dt><dd>{Math.round(rainStats.meanCI[0]).toLocaleString()}–{Math.round(rainStats.meanCI[1]).toLocaleString()} mm</dd></>}
+              {rainStats.trendCI && <><dt>Trend estimate</dt><dd>{rainStats.trendPerYear.toFixed(1)} mm/year ({rainStats.trendCI[0].toFixed(1)} to {rainStats.trendCI[1].toFixed(1)})</dd></>}
+            </dl>
+          </article>}
+          {tempStats && <article className="stat-card">
+            <h4>Annual mean temperature</h4>
+            <p className="stat-primary">{tempStats.mean.toFixed(1)} <small>°C mean</small></p>
+            <dl>
+              <dt>Median</dt><dd>{tempStats.median.toFixed(1)} °C</dd>
+              <dt>Standard deviation</dt><dd>{tempStats.sd == null ? '—' : `${tempStats.sd.toFixed(1)} °C`}</dd>
+              <dt>Middle 80% of years</dt><dd>{tempStats.p10.toFixed(1)}–{tempStats.p90.toFixed(1)} °C</dd>
+              {tempStats.meanCI && <><dt>95% interval for mean</dt><dd>{tempStats.meanCI[0].toFixed(1)}–{tempStats.meanCI[1].toFixed(1)} °C</dd></>}
+              {tempStats.trendCI && <><dt>Trend estimate</dt><dd>{(tempStats.trendPerYear * 10).toFixed(2)} °C/decade ({(tempStats.trendCI[0] * 10).toFixed(2)} to {(tempStats.trendCI[1] * 10).toFixed(2)})</dd></>}
+            </dl>
+          </article>}
+        </div>
+        <p className="hint">Annual sample size: {rainStats?.n ?? 0} complete years. Trend intervals use circular moving blocks to retain short runs of adjacent-year variability. Treat trend ranges as descriptive; persistent climate patterns can extend beyond the resampled blocks.</p>
+        {rainStats && rainStats.n < 8 && <p className="hint">Bootstrap intervals and the lower-quintile rainfall adjustment need at least 8 complete years; this record is shorter, so the water score uses its conservative variability-based fallback.</p>}
+      </section>
       <div className="charts">
         <Chart title="Typical rainfall by month (mm)" data={monthly} line={`${wettest.name} is usually the wettest month (${wettest.rain} mm) and ${driest.name} the driest (${driest.rain} mm).`}>
           {(d) => (
