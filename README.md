@@ -21,8 +21,8 @@ For a fast live demo, use a **rural agricultural point in Coimbatore district, T
 
 ## NASA Space Apps submission links
 
-- Project demonstration: [Download the seven-slide deck](https://vtrsharin-sj.github.io/Field-Shift/demo/FieldShift-Demo.pptx)
-- Project: [Open the live FieldShift app](https://vtrsharin-sj.github.io/Field-Shift/)
+- Project demonstration: [Download the seven-slide deck](https://vtrsharvin-sj.github.io/Field-Shift/demo/FieldShift-Demo-v2.pptx)
+- Project: [Open the live FieldShift app](https://vtrsharvin-sj.github.io/Field-Shift/)
 
 ## What the prototype does
 
