@@ -58,6 +58,7 @@ export default function ClimateSnapshot({ ctx, power }) {
             <dl>
               <dt>Median</dt><dd>{Math.round(rainStats.median).toLocaleString()} mm</dd>
               <dt>Standard deviation</dt><dd>{rainStats.sd == null ? '—' : `${Math.round(rainStats.sd).toLocaleString()} mm`}</dd>
+              <dt>Middle 50% (IQR)</dt><dd>{Math.round(rainStats.p25).toLocaleString()}–{Math.round(rainStats.p75).toLocaleString()} mm</dd>
               <dt>Middle 80% of years</dt><dd>{Math.round(rainStats.p10).toLocaleString()}–{Math.round(rainStats.p90).toLocaleString()} mm</dd>
               <dt>Year-to-year variation (CV)</dt><dd>{rainStats.cv == null ? '—' : `${Math.round(rainStats.cv)}%`}</dd>
               {rainStats.meanCI && <><dt>95% interval for mean</dt><dd>{Math.round(rainStats.meanCI[0]).toLocaleString()}–{Math.round(rainStats.meanCI[1]).toLocaleString()} mm</dd></>}
@@ -70,6 +71,7 @@ export default function ClimateSnapshot({ ctx, power }) {
             <dl>
               <dt>Median</dt><dd>{tempStats.median.toFixed(1)} °C</dd>
               <dt>Standard deviation</dt><dd>{tempStats.sd == null ? '—' : `${tempStats.sd.toFixed(1)} °C`}</dd>
+              <dt>Middle 50% (IQR)</dt><dd>{tempStats.p25.toFixed(1)}–{tempStats.p75.toFixed(1)} °C</dd>
               <dt>Middle 80% of years</dt><dd>{tempStats.p10.toFixed(1)}–{tempStats.p90.toFixed(1)} °C</dd>
               {tempStats.meanCI && <><dt>95% interval for mean</dt><dd>{tempStats.meanCI[0].toFixed(1)}–{tempStats.meanCI[1].toFixed(1)} °C</dd></>}
               {tempStats.trendCI && <><dt>Trend estimate</dt><dd>{(tempStats.trendPerYear * 10).toFixed(2)} °C/decade ({(tempStats.trendCI[0] * 10).toFixed(2)} to {(tempStats.trendCI[1] * 10).toFixed(2)})</dd></>}

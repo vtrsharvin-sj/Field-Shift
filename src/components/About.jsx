@@ -29,7 +29,7 @@ export default function About() {
       <h3>How the statistical evidence works</h3>
       <ul>
         <li>Incomplete annual records are excluded from climate summaries. With at least 8 complete growing seasons, the water-risk score uses observed 20th-percentile rainfall as a dry-season stress case as well as the year-to-year coefficient of variation. Shorter records use a CV-based fallback and are flagged.</li>
-        <li>The Climate view reports annual mean, median, standard deviation and 10th–90th percentile spread. Its 95% intervals use 1,000 deterministic moving-block bootstrap resamples of annual data; they summarize uncertainty in this historical record, not a future forecast.</li>
+        <li>The Climate view reports annual mean, median, standard deviation, interquartile range and 10th–90th percentile spread. Its 95% intervals use 1,000 deterministic moving-block bootstrap resamples of annual data; they summarize uncertainty in this historical record, not a future forecast.</li>
         <li>Rotation scores remain a rule-based screening index. The side-by-side table shows every factor and each strategy’s point difference from the farmer’s current rotation. It is not a statistical yield or profit prediction.</li>
         <li>After data loads, the browser keeps an offline copy for the same coordinates and period. In Data used, export the NASA POWER daily record as a portable JSON dataset or import a matching FieldShift dataset on another device. Soil, maps and place lookup may still require an internet connection.</li>
       </ul>
