@@ -4,7 +4,7 @@ import rotations from './data/rotations.json'
 import soils from './data/soils.json'
 import weights from './data/weights.json'
 import { DEFAULT_PRIORITIES, WINDOW } from './defaults.js'
-import { fetchPower, importOfflineDataset, validateLocation } from './api/power.js'
+import { exportOfflineDataset, fetchPower, importOfflineDataset, validateLocation } from './api/power.js'
 import { fetchSoil } from './api/soilgrids.js'
 import { fetchSatelliteBundle } from './api/satellite.js'
 import { fetchLocalCrops } from './api/localCrops.js'
@@ -43,6 +43,7 @@ export default function App() {
   const [step, setStep] = useState(0)
   const [showHero, setShowHero] = useState(true)
   const [offlineImportMessage, setOfflineImportMessage] = useState('')
+  const [offlinePreparing, setOfflinePreparing] = useState(false)
 
   // What is grown around the farm (text about the area). Starts when the location is confirmed so the crop lists in step 2 are already smart.
   async function loadLocal(lat, lon) {
@@ -111,17 +112,19 @@ export default function App() {
     }
   }
 
-  async function usePreparedOfflineDataset() {
+  async function prepareLocationOfflineDataset() {
     try {
-      setOfflineImportMessage('Loading the prepared NASA record…')
-      const response = await fetch(`${import.meta.env.BASE_URL}data/fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json`)
-      if (!response.ok) throw new Error('The prepared dataset could not be downloaded. Check your connection and try again.')
-      const dataset = await response.json()
+      setOfflinePreparing(true)
+      setOfflineImportMessage('Downloading NASA POWER data for this location and saving an offline copy…')
+      const power = await fetchPower({ lat: farm.lat, lon: farm.lon, ...WINDOW })
+      const dataset = exportOfflineDataset(power)
       await importOfflineDataset(dataset, { lat: farm.lat, lon: farm.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
-      setOfflineImportMessage('NASA dataset matched this location and date range. Running the analysis from the offline record…')
+      setOfflineImportMessage('This location’s NASA dataset is saved offline. Running the comparison from that saved record…')
       await loadData(farm)
     } catch (error) {
       setOfflineImportMessage(error.message)
+    } finally {
+      setOfflinePreparing(false)
     }
   }
 
@@ -188,10 +191,11 @@ export default function App() {
                     <h3 id="offline-import-h">Have an offline NASA dataset?</h3>
                     <p>Import a FieldShift JSON file for these coordinates and dates, then run the comparison without a live weather request.</p>
                     <div className="offline-sample">
-                      <p><strong>Prepared sample:</strong> VTR Weaving Mills, Vadavalli, Coimbatore · NASA POWER daily data, 2005–15 Nov 2026.</p>
-                      <button type="button" className="secondary" onClick={usePreparedOfflineDataset} disabled={!locationOk}>Use prepared NASA dataset</button>{' '}
-                      <a href={`${import.meta.env.BASE_URL}data/fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json`} download="fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json">Download JSON</a>
-                      <p className="hint">This is a location-specific regional sample, not a field measurement. Choose the matching place first; FieldShift checks location and dates before loading it.</p>
+                      <p><strong>Use this farm offline:</strong> Get the NASA POWER record for the location you selected, save it in this browser, and run the comparison from that copy.</p>
+                      <button type="button" className="secondary" onClick={prepareLocationOfflineDataset} disabled={!locationOk || offlinePreparing}>
+                        {offlinePreparing ? 'Preparing offline dataset…' : 'Get NASA data for this location & save offline'}
+                      </button>
+                      <p className="hint">This first download needs internet. Later analyses at the same coordinates and date range use the saved dataset. You can export a portable JSON copy from Data used.</p>
                     </div>
                     <label>Choose offline dataset
                       <input type="file" accept=".json,application/json" onChange={async (event) => {
