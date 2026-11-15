@@ -111,6 +111,20 @@ export default function App() {
     }
   }
 
+  async function usePreparedOfflineDataset() {
+    try {
+      setOfflineImportMessage('Loading the prepared NASA record…')
+      const response = await fetch(`${import.meta.env.BASE_URL}data/fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json`)
+      if (!response.ok) throw new Error('The prepared dataset could not be downloaded. Check your connection and try again.')
+      const dataset = await response.json()
+      await importOfflineDataset(dataset, { lat: farm.lat, lon: farm.lon, startYear: WINDOW.startYear, endYear: WINDOW.endYear })
+      setOfflineImportMessage('NASA dataset matched this location and date range. Running the analysis from the offline record…')
+      await loadData(farm)
+    } catch (error) {
+      setOfflineImportMessage(error.message)
+    }
+  }
+
   // Satellite layers load in the background right after the climate data. A run id drops results from an older analysis.
   const runId = useRef(0)
   async function loadSatellite({ point, force = false, id = runId.current } = {}) {
@@ -173,6 +187,12 @@ export default function App() {
                   <section className="offline-wizard" aria-labelledby="offline-import-h">
                     <h3 id="offline-import-h">Have an offline NASA dataset?</h3>
                     <p>Import a FieldShift JSON file for these coordinates and dates, then run the comparison without a live weather request.</p>
+                    <div className="offline-sample">
+                      <p><strong>Prepared sample:</strong> VTR Weaving Mills, Vadavalli, Coimbatore · NASA POWER daily data, 2005–15 Nov 2026.</p>
+                      <button type="button" className="secondary" onClick={usePreparedOfflineDataset} disabled={!locationOk}>Use prepared NASA dataset</button>{' '}
+                      <a href={`${import.meta.env.BASE_URL}data/fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json`} download="fieldshift-nasa-power-vtr-weaving-mills-2005-2026.json">Download JSON</a>
+                      <p className="hint">This is a location-specific regional sample, not a field measurement. Choose the matching place first; FieldShift checks location and dates before loading it.</p>
+                    </div>
                     <label>Choose offline dataset
                       <input type="file" accept=".json,application/json" onChange={async (event) => {
                         const file = event.target.files?.[0]
